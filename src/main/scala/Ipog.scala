@@ -56,7 +56,7 @@ object Ipog {
   }
 
   def ipog(parameters: Vector[Parameter], t: Int):(Vector[Parameter],Vector[Vector[Option[Int]]]) = {
-    val ordParameters = parameters.sortBy(_.dimension)(Ordering[Int]reverse)
+    val ordParameters = parameters.sortBy(_.dimension)(Ordering.Int.reverse)
     val parametersNum = parameters.length
     val combinations = Vector.fill(t)(1) concat Vector.fill(parametersNum - t)(0)
     val testSet = combineValues(parameters,combinations)
@@ -71,19 +71,6 @@ object Ipog {
         val pi: Vector[Vector[Int]] = combineParameters(m, t)
           .filter(_(m - 1) == 1)
           .flatMap(combination => combineValues(ordParameters,combination))
-
-        val newTestSet = addColumn(testSet, )
-
-
-
-
-
-
-
-
-
-
-
         (Vector.empty,Vector(Vector.empty))
       }
     }

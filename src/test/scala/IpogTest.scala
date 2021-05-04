@@ -111,7 +111,7 @@ class IpogTest extends munit.FunSuite {
     assertEquals(combineValues(inputParameters,inputCombination),expectedCombinations)
   }
 
-  test("maxCoverageValue should find the new value that gets the most combinations")
+
 
 }
 
