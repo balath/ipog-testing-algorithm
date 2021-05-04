@@ -10,6 +10,12 @@ object Utils {
     factorialAccumulator(1, n)
   }
 
-  val nCr = (n: Int, r: Int) => factorial(n) / (factorial(r) * factorial(n-r))
+  def nCr(n: Int, r: Int): Option[Long] = (n,r) match {
+    case (n, r) if n == r => Some(1)
+    case (_, 0) => Some(1)
+    case (0, _) => Some(0)
+    case (n,r) if n < 0 || r < 0 || r > n  => None
+    case _ => Some(factorial (n) / (factorial (r) * factorial (n - r) ))
+  }
 
 }

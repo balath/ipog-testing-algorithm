@@ -17,7 +17,7 @@ class IpogTestProperties extends ScalaCheckSuite {
       val combinations = combineParameters(m, n)
       val combinationsLength = combinations.length
 
-      assertEquals(combinationsLength.toLong,nCr(m, n))
+      assertEquals(Option(combinationsLength.toLong),nCr(m, n))
       assert(combinations.map(_ count (_ == 1)).forall (_ == n))
       assertEquals(combinationsLength, combinations.distinct.length)
     }

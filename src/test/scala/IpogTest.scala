@@ -71,7 +71,7 @@ class IpogTest extends munit.FunSuite {
     val inputM = 7
     val inputN = 4
     val expectedCombinations = nCr(inputM,inputN)
-    assertEquals(combineParameters(inputM,inputN).length.toLong,expectedCombinations)
+    assertEquals(Option(combineParameters(inputM,inputN).length.toLong),expectedCombinations)
 }
   test("combineValues should return all values combinations of given combination parameters") {
     val inputParameters = Vector(("P1",2),("P2",3),("P3",2),("P4",3),("P5",2)).map(param => Parameter(param._1, param._2))
