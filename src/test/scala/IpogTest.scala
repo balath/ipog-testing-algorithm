@@ -3,10 +3,23 @@ import Utils.nCr
 
 class IpogTest extends munit.FunSuite {
 
+  val inputParameters = Vector(("P1",2),("P2",3),("P3",2),("P4",3),("P5",2)).map(p => Parameter(p._1, p._2))
+  val inputPi = Map(
+    (Vector(0, 1, 1),
+      Vector(Vector(0, 0), Vector(0, 1), Vector(1, 0), Vector(1, 1), Vector(2, 0), Vector(2, 1)).map(_.map(Some(_)))),
+    (Vector(1, 0, 1),
+      Vector(Vector(0, 0), Vector(0, 1), Vector(1, 0), Vector(1, 1), Vector(2, 0), Vector(2, 1)).map(_.map(Some(_))))
+  )
+  val coveredCombinations = Map(
+    (Vector(0, 1, 1),
+      Vector(Vector(Some(0), Some(0)))),
+    (Vector(1, 0, 1),
+      Vector(Vector(Some(0), Some(0))))
+  )
+
   test("ipog algorithm should return a tuple with parameter dimensions a proper test set") {
-    val inputParameters = Vector(("P1",2),("P2",3),("P3",2),("P4",3),("P5",2)).map(param => Parameter(param._1, param._2))
     val inputT = 2
-    val expectedParameters = Vector(("P2",3),("P4",3),("P1",2),("P3",2),("P5",2)).map(param => Parameter(param._1, param._2))
+    val expectedParameters = Vector(("P2",3),("P4",3),("P1",2),("P3",2),("P5",2)).map(p => Parameter(p._1, p._2))
     val expectedTestSet = Vector(
       Vector(0,0,0,0,0),
       Vector(0,1,1,1,1),
@@ -23,63 +36,45 @@ class IpogTest extends munit.FunSuite {
       case n => Some(n)
     })
     val output = ipog(inputParameters,inputT)
-    output._2.foreach(comb => println(comb.map{
-      case Some(n) => s"$n"
-      case None => "*"
-    }.foldLeft("")(_ + " " + _)))
     assertEquals(output,(expectedParameters,expectedTestSet))
   }
 
   test("combineParameters should combine properly m parameters taken n at a time") {
-    val inputM = 5
-    val inputN = 3
-    val expectedCombinations = Vector(
-      Vector(0,0,1,1,1),
-      Vector(0,1,0,1,1),
-      Vector(0,1,1,0,1),
-      Vector(0,1,1,1,0),
-      Vector(1,0,0,1,1),
-      Vector(1,0,1,0,1),
-      Vector(1,0,1,1,0),
-      Vector(1,1,0,0,1),
-      Vector(1,1,0,1,0),
-      Vector(1,1,1,0,0)
+    val mList = Vector(5,5,5,0)
+    val nList = Vector(3,0,5,3)
+    val expectedCombinationsList = List(
+      Vector(                     //Resultado del ejemplo del enunciado
+        Vector(0,0,1,1,1),
+        Vector(0,1,0,1,1),
+        Vector(0,1,1,0,1),
+        Vector(0,1,1,1,0),
+        Vector(1,0,0,1,1),
+        Vector(1,0,1,0,1),
+        Vector(1,0,1,1,0),
+        Vector(1,1,0,0,1),
+        Vector(1,1,0,1,0),
+        Vector(1,1,1,0,0)
+      ),
+      Vector(Vector(0,0,0,0,0)),  //Resultado para n=0
+      Vector(Vector(1,1,1,1,1)),  //Resultado para m=n
+      Vector.empty                //Resultado para m=0
     )
-    assertEquals(combineParameters(inputM, inputN),expectedCombinations)
-  }
 
-  test("combineParameters should return a 0 filled vector when n = 0") {
-    val inputM = 5
-    val inputN = 0
-    val expectedCombinations = Vector(
-      Vector(0,0,0,0,0)
-    )
-    assertEquals(combineParameters(inputM, inputN),expectedCombinations)
-  }
-
-  test("combineParameters should return a 1 filled vector when m = n") {
-    val sameInput = 5
-    val expectedCombinations = Vector(
-      Vector(1,1,1,1,1)
-    )
-    assertEquals(combineParameters(sameInput, sameInput),expectedCombinations)
-  }
-
-  test("combineParameters should return an empty vector when m = 0") {
-    val inputM = 0
-    val inputN = 0
-    val expectedCombinations = Vector.empty
-    assertEquals(combineParameters(inputM, inputN),expectedCombinations)
+    val testCases = mList lazyZip nList lazyZip expectedCombinationsList
+    testCases.map {
+      case (m, n, expected) => assertEquals(combineParameters(m, n), expected)
+    }
   }
 
   test("combineParameters should return m nCr n combinations") {
     val inputM = 7
     val inputN = 4
-    val expectedCombinations = nCr(inputM,inputN)
-    assertEquals(Option(combineParameters(inputM, inputN).length.toLong),expectedCombinations)
-}
+    val expectedCombinationsNCR = nCr(inputM,inputN)
+
+    assertEquals(Option(combineParameters(inputM, inputN).length.toLong),expectedCombinationsNCR)
+  }
+
   test("combineValues should return all values combinations of given combination parameters") {
-    val inputParameters = Vector(("P1",2),("P2",3),("P3",2),("P4",3),("P5",2)).map(param => Parameter(param._1, param._2))
     val inputCombination = Vector(1,1,0,0,1)
     val expectedCombinations = Vector(
       Vector(0,0,0),
@@ -94,88 +89,40 @@ class IpogTest extends munit.FunSuite {
       Vector(1,1,1),
       Vector(1,2,0),
       Vector(1,2,1)
-    )
-    assertEquals(combineValues(inputParameters,inputCombination),expectedCombinations.map(_.map(Some(_))))
-  }
+    ).map(_.map(Some(_)))
+    val inputCombOneParameter = Vector(0,1,0,0,0)
+    val expectedForOneParameter = Vector(0,1,2).map(n => Vector(Some(n)))
+    val inputCombZeroParameter = Vector(0,0,0,0,0)
+    val expectedForZeroParameter = Vector(Vector.empty)
 
-  test("combineValues should return combinations given only one active parameter") {
-    val inputParameters = Vector(("P1",2),("P2",3),("P3",2),("P4",3),("P5",2)).map(param => Parameter(param._1, param._2))
-    val inputCombination = Vector(0,1,0,0,0)
-    val expectedCombinations = Vector(
-      Vector(0),
-      Vector(1),
-      Vector(2)
-    )
-    assertEquals(combineValues(inputParameters,inputCombination),expectedCombinations.map(_.map(Some(_))))
-  }
-
-  test("combineValues should return empty combinations given only none active parameter") {
-    val inputParameters = Vector(("P1",2),("P2",3),("P3",2),("P4",3),("P5",2)).map(param => Parameter(param._1, param._2))
-    val inputCombination = Vector(0,0,0,0,0)
-    val expectedCombinations = Vector(Vector.empty)
     assertEquals(combineValues(inputParameters,inputCombination),expectedCombinations)
+    assertEquals(combineValues(inputParameters,inputCombOneParameter),expectedForOneParameter)
+    assertEquals(combineValues(inputParameters,inputCombZeroParameter),expectedForZeroParameter)
   }
 
   test("maxCoverageValue should find the value that makes test cases set cover the most combinations") {
     val inputParameter = Parameter("P1",2)
-    val firstRow = Vector(0,0)
-    val inputPi = Map(
-      (Vector(0, 1, 1),
-        Vector(Vector(0, 0), Vector(0, 1), Vector(1, 0), Vector(1, 1), Vector(2, 0), Vector(2, 1)).map(_.map(Some(_)))),
-      (Vector(1, 0, 1),
-        Vector(Vector(0, 0), Vector(0, 1), Vector(1, 0), Vector(1, 1), Vector(2, 0), Vector(2, 1)).map(_.map(Some(_))))
-    )
-    val expected: (Int,PiList) = (0, Map(
-      (Vector(0, 1, 1),
-        Vector(Vector(Some(0), Some(0)))),
-      (Vector(1, 0, 1),
-        Vector(Vector(Some(0), Some(0)))))
-    )
-    assertEquals(maxCoverageValue(inputParameter,firstRow.map(Some(_)),inputPi),expected)
+    val row = Vector(0,0)
+    val expected = (0, coveredCombinations)
 
+    assertEquals(maxCoverageValue(inputParameter,row.map(Some(_)),inputPi),expected)
   }
 
-  test("maxCoverageValue should find the value that makes test cases set cover the most combinations2") {
-    val inputParameter = Parameter("P1",2)
-    val secondRow = Vector(Some(0),Some(1))
-    val inputPi = Map(
-      (Vector(0, 1, 1),
-        Vector(Vector(0, 1), Vector(1, 0), Vector(1, 1), Vector(2, 0), Vector(2, 1)).map(_.map(Some(_)))),
-      (Vector(1, 0, 1),
-        Vector(Vector(0, 1), Vector(1, 0), Vector(1, 1), Vector(2, 0), Vector(2, 1)).map(_.map(Some(_))))
-    )
-    val expected: (Int,PiList) = (1, Map(
-      (Vector(0, 1, 1),
-        Vector(Vector(Some(1), Some(1)))),
-      (Vector(1, 0, 1),
-        Vector(Vector(Some(0), Some(1)))))
-    )
-    assertEquals(maxCoverageValue(inputParameter,secondRow,inputPi),expected)
-  }
+  test("updatePi should delete covered combinations from the pi list") {
 
-  test("Given a Pi list and a subset of its covered combinations, updatePi should delete covered combinations from the list") {
-    val inputPi = Map(
-      (Vector(0, 1, 1),
-        Vector(Vector(0, 0), Vector(0, 1), Vector(1, 0), Vector(1, 1), Vector(2, 0), Vector(2, 1)).map(_.map(Some(_)))),
-      (Vector(1, 0, 1),
-        Vector(Vector(0, 0), Vector(0, 1), Vector(1, 0), Vector(1, 1), Vector(2, 0), Vector(2, 1)).map(_.map(Some(_))))
-    )
-    val coveredCombinations = Map(
-      (Vector(0, 1, 1),
-        Vector(Vector(Some(0), Some(0)))),
-      (Vector(1, 0, 1),
-        Vector(Vector(Some(0), Some(0))))
-    )
+    val emptyPi: PiList = Map.empty
+    val emptyCoveredCombinations: PiList = Map.empty
     val expected = Map(
-      (Vector(0, 1, 1),
-        Vector(Vector(0, 1), Vector(1, 0), Vector(1, 1), Vector(2, 0), Vector(2, 1)).map(_.map(Some(_)))),
-      (Vector(1, 0, 1),
-        Vector(Vector(0, 1), Vector(1, 0), Vector(1, 1), Vector(2, 0), Vector(2, 1)).map(_.map(Some(_))))
+    (Vector(0, 1, 1),
+    Vector(Vector(0, 1), Vector(1, 0), Vector(1, 1), Vector(2, 0), Vector(2, 1)).map(_.map(Some(_)))),
+    (Vector(1, 0, 1),
+    Vector(Vector(0, 1), Vector(1, 0), Vector(1, 1), Vector(2, 0), Vector(2, 1)).map(_.map(Some(_))))
     )
 
     assertEquals(updatePi(inputPi,coveredCombinations), expected)
+    assertEquals(updatePi(inputPi,emptyCoveredCombinations), inputPi)
+    assertEquals(updatePi(emptyPi,coveredCombinations), emptyPi)
   }
-
 
 }
 
