@@ -12,8 +12,6 @@ import scala.util.Random
 
 class IpogDiferentialTest extends ScalaCheckSuite {
 
-  override val scalaCheckInitialSeed = "KxFcFc-O-3SdtwQMbpx5mpTjE3UozLf78yowLXwflvK="
-
   val logger = Logger("Dif. Test")
 
   val outputPath = ".\\testSetsOutput\\"
@@ -23,7 +21,7 @@ class IpogDiferentialTest extends ScalaCheckSuite {
   val maxDimensions = 5
   val maxT = 5
 
-  var count = 0
+ // var count = 0
 
   implicit val noShrinkInt: Shrink[Int] = Shrink.shrinkAny
   implicit val noShrinkComb: Shrink[Vector[Int]] = Shrink.shrinkAny
@@ -32,7 +30,7 @@ class IpogDiferentialTest extends ScalaCheckSuite {
   val genDimension = Gen.choose(1,maxDimensions)
   val genDimensions = Gen.containerOfN[Vector,Int](Random.between(1,maxParameters + 1),genDimension)
 
-  property("ipog output compare with acts") {
+  property("ipog output compare with acts".ignore) {
     forAll(genDimensions,genT){(dimensions, t) =>
       (t <= dimensions.length) ==> {
         count += 1
@@ -65,8 +63,7 @@ class IpogDiferentialTest extends ScalaCheckSuite {
     }
   }
 
-  override def afterAll(): Unit = {
-    logger.info(s"Total tests: $count")
-  }
-  true
+//  override def afterAll(): Unit = {
+//    logger.info(s"Total tests: $count")
+//  }
 }
