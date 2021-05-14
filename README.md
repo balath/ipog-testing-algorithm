@@ -1,4 +1,5 @@
 [![codecov](https://codecov.io/gh/balath/ipog-testing-algorithm/branch/master/graph/badge.svg?token=81V8EXIA17)](https://codecov.io/gh/balath/ipog-testing-algorithm)
+![example workflow](https://github.com/github/docs/actions/workflows/main.yml/badge.svg)
 
 ## Ipog algorithm
 
