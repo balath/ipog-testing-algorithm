@@ -12,6 +12,8 @@ import scala.util.Random
 
 class IpogDiferentialTest extends ScalaCheckSuite {
 
+  override val scalaCheckInitialSeed = "KxFcFc-O-3SdtwQMbpx5mpTjE3UozLf78yowLXwflvK="
+
   val logger = Logger("Dif. Test")
 
   val outputPath = ".\\testSetsOutput\\"
@@ -66,5 +68,5 @@ class IpogDiferentialTest extends ScalaCheckSuite {
   override def afterAll(): Unit = {
     logger.info(s"Total tests: $count")
   }
-
+  true
 }
