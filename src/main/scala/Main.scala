@@ -1,4 +1,5 @@
-import Ipog.{ipog, OptCombination, Parameter}
+import ActsParser._
+import Ipog.{Parameter, ipog}
 
 import scala.io.Source
 import scala.util.{Failure, Success, Try}
@@ -14,7 +15,9 @@ object Main extends App {
         case Success(tuples) => {
           val (parameters, t) = parseCsvTuples(tuples)
           val (sortedParameters, testSet) = ipog(parameters, t)
-          println(testSetToString(sortedParameters, testSet))
+          val testSetString = testSetToActsInputFormat(sortedParameters, testSet)
+          println(testSetString)
+          writeACTS(testSetString,s"testSet-${System.currentTimeMillis()}.txt")
         }
       }
       bufferedSource.close
@@ -28,19 +31,13 @@ object Main extends App {
     (parameters, t)
   }
 
-  def testSetToString(parameters: Vector[Parameter], testSet: Vector[OptCombination]): String = {
-    List(
-      "=======================",
-      s"${parameters.foldLeft("   ")((z,param) => s"$z${param.name}  ")}",
-      "=======================",
-      testSet
-        .map(comb => s"${comb.map{
-              case Some(n) => s"$n"
-              case None => "*"
-            }.foldLeft("")((z, value) => s"$z   $value")
-        }")
-        .mkString("\n")
-    ).mkString("\n")
-  }
+
+  //TODO Clases de equivalencia para pruebas unitarias
+  //TODO Generar juegos de pruebas con los parámetros
+  //TODO Implementarlas pruebas unitarias
+  //TODO Salida de ipog como archivo acts
+  //TODO Automatización de la salida
+
+
 
 }

@@ -24,39 +24,6 @@ class MainTest extends munit.FunSuite {
     assertEquals(parseCsvTuples(tuples),(expectedParameters,expectedT))
   }
 
-  test("testSetToString should return a formatted string for display"){
-    val inputParameters = Vector(("P2",3),("P4",3),("P1",2),("P3",2),("P5",2)).map(p => Parameter(p._1, p._2))
-    val inputTestSet = Vector(
-      Vector(0,0,0,0,0),
-      Vector(0,1,1,1,1),
-      Vector(0,2,0,1,0),
-      Vector(1,0,1,0,1),
-      Vector(1,1,0,0,0),
-      Vector(1,2,1,0,0),
-      Vector(2,0,0,1,1),
-      Vector(2,1,1,0,0),
-      Vector(2,2,0,0,1),
-      Vector(1,-1,-1,1,0)
-    ).map(_.map{
-      case -1 => None
-      case n => Some(n)
-    })
-    val expected =
-      "=======================\n" +
-      "   P2  P4  P1  P3  P5  \n" +
-      "=======================\n" +
-      "   0   0   0   0   0\n" +
-      "   0   1   1   1   1\n" +
-      "   0   2   0   1   0\n" +
-      "   1   0   1   0   1\n" +
-      "   1   1   0   0   0\n" +
-      "   1   2   1   0   0\n" +
-      "   2   0   0   1   1\n" +
-      "   2   1   1   0   0\n" +
-      "   2   2   0   0   1\n" +
-      "   1   *   *   1   0"
 
-    assertEquals(testSetToString(inputParameters,inputTestSet), expected)
-  }
 
 }
