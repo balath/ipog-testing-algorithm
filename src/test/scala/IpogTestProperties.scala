@@ -30,7 +30,7 @@ class IpogDiferentialTest extends ScalaCheckSuite {
   val genDimension = Gen.choose(1,maxDimensions)
   val genDimensions = Gen.containerOfN[Vector,Int](Random.between(1,maxParameters + 1),genDimension)
 
-  property("ipog output compare with acts".ignore) {
+  property("ipog output compare with acts") {
     forAll(genDimensions,genT){(dimensions, t) =>
       (t <= dimensions.length) ==> {
 //        count += 1
@@ -41,7 +41,7 @@ class IpogDiferentialTest extends ScalaCheckSuite {
         writeACTS(testSetString, inputFileName)
 
         val outputFileName = inputFileName.replace("in", "out")
-        val _ = s"java -jar -Ddmode=extend -Doutput=csv -Drandstar=off -Dcheck=on -Ddoi=$t " +
+        val _ = s"java -jar -Dmode=extend -Doutput=csv -Drandstar=off -Dcheck=on -Ddoi=$t " +
           s".\\lib\\acts_cmd_2.92.jar ActsConsoleManager $inputFileName $outputFileName" !!
 
         val ipogCongifurations = testSet.length
@@ -54,14 +54,9 @@ class IpogDiferentialTest extends ScalaCheckSuite {
           .trim
           .toInt
         bufferedSource.close()
-        
-        logger.info(s"Test ${if (ipogCongifurations == actsConfigurations) "OK!" else "Failed"} ACTS: $actsConfigurations Ipog: $ipogCongifurations")
 
+        assertEquals(actsConfigurations, ipogCongifurations)
       }
     }
   }
-
-//  override def afterAll(): Unit = {
-//    logger.info(s"Total tests: $count")
-//  }
 }
