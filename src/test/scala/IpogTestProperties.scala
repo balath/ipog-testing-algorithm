@@ -51,14 +51,18 @@ class IpogDiferentialTest extends ScalaCheckSuite {
           .toInt
         bufferedSource.close()
 
+        val configurationsDifference = (ipogCongifurations - actsConfigurations).abs
+        val goodCoverage = (configurations: Int, difference: Int) => difference < (configurations * 0.01)
+
+        val coverageIsOk = goodCoverage(ipogCongifurations,configurationsDifference)
         logger.info(
           s"Test ${
-            if (ipogCongifurations == actsConfigurations) "OK!"
+            if (coverageIsOk) "OK!"
             else "Failed"
           } ACTS: $actsConfigurations Ipog: $ipogCongifurations"
         )
 
-        assertEquals(actsConfigurations, ipogCongifurations)
+        assert(coverageIsOk)
       }
     }
   }
