@@ -14,7 +14,7 @@ class IpogDiferentialTest extends ScalaCheckSuite {
 
   val logger = Logger("Dif. Test")
 
-  val outputPath = ".\\testSetsOutput\\"
+  val outputPath = "./src/test/"
 
   val numberOfTest = 100
   val maxParameters = 10
@@ -42,7 +42,7 @@ class IpogDiferentialTest extends ScalaCheckSuite {
 
         val outputFileName = inputFileName.replace("in", "out")
         val _ = s"java -jar -Dmode=extend -Doutput=csv -Drandstar=off -Dcheck=on -Ddoi=$t " +
-          s".\\lib\\acts_cmd_2.92.jar ActsConsoleManager $inputFileName $outputFileName" !!
+          s"./lib/acts_cmd_2.92.jar ActsConsoleManager $inputFileName $outputFileName" !!
 
         val ipogCongifurations = testSet.length
         val bufferedSource = Source.fromFile(outputFileName)
