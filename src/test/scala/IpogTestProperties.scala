@@ -16,12 +16,9 @@ class IpogDiferentialTest extends ScalaCheckSuite {
 
   val outputPath = "./src/test/"
 
-  val numberOfTest = 100
   val maxParameters = 10
   val maxDimensions = 5
   val maxT = 5
-
-//  var count = 0
 
   implicit val noShrinkInt: Shrink[Int] = Shrink.shrinkAny
   implicit val noShrinkComb: Shrink[Vector[Int]] = Shrink.shrinkAny
@@ -33,7 +30,6 @@ class IpogDiferentialTest extends ScalaCheckSuite {
   property("ipog output compare with acts") {
     forAll(genDimensions,genT){(dimensions, t) =>
       (t <= dimensions.length) ==> {
-//        count += 1
         val parameters = dimensions.zipWithIndex.map { case (dim, index) => Parameter(s"P${index + 1}", dim) }
         val inputFileName = s"$outputPath${System.currentTimeMillis}-inputTestSet.txt"
         val (outputParameters, testSet) = ipog(parameters, t)
@@ -54,6 +50,13 @@ class IpogDiferentialTest extends ScalaCheckSuite {
           .trim
           .toInt
         bufferedSource.close()
+
+        logger.info(
+          s"Test ${
+            if (ipogCongifurations == actsConfigurations) "OK!"
+            else "Failed"
+          } ACTS: $actsConfigurations Ipog: $ipogCongifurations"
+        )
 
         assertEquals(actsConfigurations, ipogCongifurations)
       }
