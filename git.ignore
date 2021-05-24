@@ -1,6 +1,7 @@
-/target
-/project/project
-/project/target
-/null
-/.idea
-/.bsp
+target
+project/project
+project/target
+out
+null
+.idea/
+.bsp/
