@@ -21,11 +21,11 @@ class IpogDiferentialTest extends ScalaCheckSuite {
   val maxT = 5
 
   implicit val noShrinkInt: Shrink[Int] = Shrink.shrinkAny
-  implicit val noShrinkComb: Shrink[Vector[Int]] = Shrink.shrinkAny
+  implicit val noShrinkComb: Shrink[List[Int]] = Shrink.shrinkAny
 
   val genT = Gen.choose(2,maxT)
   val genDimension = Gen.choose(1,maxDimensions)
-  val genDimensions = Gen.containerOfN[Vector,Int](Random.between(1,maxParameters + 1),genDimension)
+  val genDimensions = Gen.containerOfN[List,Int](Random.between(1,maxParameters + 1),genDimension)
 
   property("ipog output compare with acts") {
     forAll(genDimensions,genT){(dimensions, t) =>

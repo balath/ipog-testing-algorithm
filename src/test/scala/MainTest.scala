@@ -11,7 +11,7 @@ class MainTest extends munit.FunSuite {
     val valuesRow = Array(1,2,1,3,2,2,3)
     val tuples = headerRow zip valuesRow
 
-    val expectedParameters = Vector(
+    val expectedParameters = List(
       Parameter("P1",1),
       Parameter("P2",2),
       Parameter("P3",1),

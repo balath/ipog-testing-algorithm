@@ -24,9 +24,9 @@ object Main extends App {
     }
   }
 
-  def parseCsvTuples(tuples: Array[(String, Int)]): (Vector[Parameter], Int) = {
+  def parseCsvTuples(tuples: Array[(String, Int)]): (List[Parameter], Int) = {
     val (parametersTuples, tTuple) = tuples.span(!_._1.startsWith("t"))
-    val parameters = parametersTuples.map(tuple => Parameter(tuple._1, tuple._2)).toVector
+    val parameters = parametersTuples.map(tuple => Parameter(tuple._1, tuple._2)).toList
     val t = tTuple.head._2
     (parameters, t)
   }
