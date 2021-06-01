@@ -124,6 +124,48 @@ class IpogTest extends munit.FunSuite {
     assertEquals(updatePi(emptyPi,coveredCombinations), emptyPi)
   }
 
+  test("verticalExtend should reuse equivalents combinations with wildcards") {
+    val piList = Map(
+      (Vector(0, 0, 0, 1, 1),
+        Vector.empty),
+      (Vector(0, 0, 1, 0, 1),
+        Vector(Vector(0, 1), Vector(1, 0)).map(_.map(Some(_)))),
+      (Vector(0, 1, 0, 0, 1),
+          Vector.empty),
+      (Vector(1, 0, 0, 0, 1),
+        Vector.empty),
+    )
+    val testSet = Vector(
+      Vector(0,0,0,0,0),
+      Vector(0,1,1,1,1),
+      Vector(1,0,1,0,1),
+      Vector(1,1,0,1,0),
+      Vector(-1,0,-1,1,0),
+      Vector(-1,1,-1,0,0)
+    ).map(_.map {
+      case -1 => None
+      case n => Some(n)
+    })
+
+    val expected = Vector(
+      Vector(0,0,0,0,0),
+      Vector(0,1,1,1,1),
+      Vector(1,0,1,0,1),
+      Vector(1,1,0,1,0),
+      Vector(-1,0,1,1,0),
+      Vector(-1,1,-1,0,0),
+      Vector(-1,-1,0,-1,1)
+    ).map(_.map {
+      case -1 => None
+      case n => Some(n)
+    })
+
+    val piLeftovers = getLeftovers(piList)
+    val obtained = verticalExtend(testSet, piLeftovers)
+
+    assertEquals(obtained, expected)
+  }
+
 }
 
 

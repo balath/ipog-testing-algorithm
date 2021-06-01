@@ -95,32 +95,28 @@ object Ipog {
       case Success(0) => None +: insertWildcards(parameters.tail, row)
       case _ => row.head +: insertWildcards(parameters.tail, row.tail)
     }
-    //Se mapean las combinaciones de valores de la lista pi con los comodines
+    //Se "aplanan" y mapean todas las combinaciones de valores de la lista pi con los comodines
     piList.flatMap { case (parameters, values) => values.map(insertWildcards(parameters, _)) }.toVector
-
   }
 
-
+  /**
+   * Se consumen los "restos" de la lista Pi, comprobando si hay coincidencia con alguna combinación previa.
+   */
+  @tailrec
   def verticalExtend(testSet: Vector[OptCombination], piLeftovers: Vector[OptCombination]):Vector[OptCombination] = {
-    def replaceWildcard(matchedCombination: OptCombination, guessCombination: OptCombination):OptCombination =
-      Try(matchedCombination.head, guessCombination.head) match {
-        case Failure(_) => Vector.empty
-        case Success(tuple) => tuple match {
-          case (None, None) => None +: replaceWildcard(matchedCombination.tail, guessCombination.tail)
-          case (None, Some(n)) => Some(n) +: replaceWildcard(matchedCombination.tail, guessCombination.tail)
-          case (Some(n), None) => Some(n) +: replaceWildcard(matchedCombination.tail, guessCombination.tail)
-          case (Some(n), _) => Some(n) +: replaceWildcard(matchedCombination.tail, guessCombination.tail)
-        }
-      }
-
     Try(piLeftovers.head) match {
       case Failure(_) => testSet
       case Success(guessCombination) => {
-        Try(testSet.find(equalsCombination(_, guessCombination)).get) match {
-          case Failure(_) => verticalExtend(testSet :+ guessCombination, piLeftovers.tail)
-          case Success(matchedCombination) => {
-            val replacedCombination = replaceWildcard(matchedCombination, guessCombination)
-            verticalExtend(testSet :+ replacedCombination, piLeftovers.tail)
+        testSet.indexWhere(equalsCombination(_, guessCombination)) match {
+          case -1 => verticalExtend(testSet :+ guessCombination, piLeftovers.tail)
+          case n => {
+            val replacedCombination = (testSet(n) lazyZip guessCombination).map{
+              case (None, None) => None
+              case (None, Some(n)) => Some(n)
+              case (Some(n), None) => Some(n)
+              case (Some(n), Some(_)) => Some(n)
+            }
+            verticalExtend(testSet.updated(n, replacedCombination), piLeftovers.tail)
           }
         }
       }

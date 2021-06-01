@@ -11,10 +11,10 @@ import scala.sys.process._
 import scala.util.Random
 
 class IpogDiferentialTest extends ScalaCheckSuite {
-
   val logger = Logger("Dif. Test")
 
-  val outputPath = "./src/test/"
+  val osName = System.getProperty("os.name")
+  val outputPath = if (osName.toLowerCase.contains("windows")) ".\\src\\test\\" else "./src/test/"
 
   val maxParameters = 10
   val maxDimensions = 5
@@ -37,8 +37,7 @@ class IpogDiferentialTest extends ScalaCheckSuite {
         writeACTS(testSetString, inputFileName)
 
         val outputFileName = inputFileName.replace("in", "out")
-        val _ = s"java -jar -Dmode=extend -Doutput=csv -Drandstar=off -Dcheck=on -Ddoi=$t " +
-          s"./lib/acts_cmd_2.92.jar ActsConsoleManager $inputFileName $outputFileName" !!
+        val _ = s"java -jar -Dmode=extend -Doutput=csv -Drandstar=off -Dcheck=on -Ddoi=$t ./lib/acts_cmd_2.92.jar ActsConsoleManager $inputFileName $outputFileName" !!
 
         val ipogCongifurations = testSet.length
         val bufferedSource = Source.fromFile(outputFileName)
@@ -52,7 +51,7 @@ class IpogDiferentialTest extends ScalaCheckSuite {
         bufferedSource.close()
 
         val configurationsDifference = (ipogCongifurations - actsConfigurations).abs
-        val goodCoverage = (configurations: Int, difference: Int) => difference < (configurations * 0.01)
+        val goodCoverage = (configurations: Int, difference: Int) => difference < (configurations * 0.05)
 
         val coverageIsOk = goodCoverage(ipogCongifurations,configurationsDifference)
         logger.info(
@@ -61,7 +60,6 @@ class IpogDiferentialTest extends ScalaCheckSuite {
             else "Failed"
           } ACTS: $actsConfigurations Ipog: $ipogCongifurations"
         )
-
         assert(coverageIsOk)
       }
     }
