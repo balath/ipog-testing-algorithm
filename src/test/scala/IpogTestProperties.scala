@@ -3,8 +3,7 @@ import Ipog.{Parameter, ipog}
 import com.typesafe.scalalogging.Logger
 import munit.ScalaCheckSuite
 import org.scalacheck.Prop.{forAll,propBoolean}
-import org.scalacheck.{Gen, Shrink}
-
+import org.scalacheck.{Gen, Shrink
 import scala.io.Source
 import scala.language.postfixOps
 import scala.sys.process._
@@ -27,7 +26,7 @@ class IpogDiferentialTest extends ScalaCheckSuite {
   val genDimension = Gen.choose(1,maxDimensions)
   val genDimensions = Gen.containerOfN[List,Int](Random.between(1,maxParameters + 1),genDimension)
 
-  property("ipog output compare with acts") {
+  property("Generated test set with ipog implementation should be equal to ACTS one") {
     forAll(genDimensions,genT){(dimensions, t) =>
       (t <= dimensions.length) ==> {
         val parameters = dimensions.zipWithIndex.map { case (dim, index) => Parameter(s"P${index + 1}", dim) }
@@ -50,10 +49,8 @@ class IpogDiferentialTest extends ScalaCheckSuite {
           .toInt
         bufferedSource.close()
 
-        val configurationsDifference = (ipogCongifurations - actsConfigurations).abs
-        val goodCoverage = (configurations: Int, difference: Int) => difference < (configurations * 0.05)
+        val coverageIsOk = ipogCongifurations - actsConfigurations == 0
 
-        val coverageIsOk = goodCoverage(ipogCongifurations,configurationsDifference)
         logger.info(
           s"Test ${
             if (coverageIsOk) "OK!"
