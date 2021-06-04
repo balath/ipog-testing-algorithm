@@ -2,6 +2,8 @@ import ActsParser._
 import Ipog.{Parameter, ipog}
 
 import scala.io.Source
+import scala.language.postfixOps
+import scala.sys.process._
 import scala.util.{Failure, Success, Try}
 
 object Main extends App {
@@ -16,8 +18,12 @@ object Main extends App {
           val (parameters, t) = parseCsvTuples(tuples)
           val (sortedParameters, testSet) = ipog(parameters, t)
           val testSetString = testSetToActsInputFormat(sortedParameters, testSet)
+          val inputFileName = s"testSet-${System.currentTimeMillis()}-in.txt"
+          val outputFileName = inputFileName.replace("in","out")
+          writeACTS(testSetString,inputFileName)
           println(testSetString)
-          writeACTS(testSetString,s"testSet-${System.currentTimeMillis()}.txt")
+          val _ = s"java -jar -Dmode=extend -Doutput=csv -Drandstar=off -Dcheck=on -Ddoi=" +
+          s"$t ./lib/acts_cmd_2.92.jar ActsConsoleManager $inputFileName $outputFileName" !!
         }
       }
       bufferedSource.close
@@ -30,14 +36,7 @@ object Main extends App {
     val t = tTuple.head._2
     (parameters, t)
   }
-
-
   //TODO Clases de equivalencia para pruebas unitarias
   //TODO Generar juegos de pruebas con los parámetros
   //TODO Implementarlas pruebas unitarias
-  //TODO Salida de ipog como archivo acts
-  //TODO Automatización de la salida
-
-
-
 }

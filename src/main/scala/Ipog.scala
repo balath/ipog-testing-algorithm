@@ -69,6 +69,8 @@ object Ipog {
       matches = coveredValues.length
     } yield (value, matches, parameters -> coveredValues)
 
+    valueAndCoveredCombinations.foreach{case (value, matches, params) =>}
+
     val (maxValue,(_, coveredCombinations)) = valueAndCoveredCombinations
       .groupMapReduce(_._1)(tuple => (tuple._2, Map(tuple._3)))((comb1, comb2) => (comb1._1 + comb2._1, comb1._2 ++ comb2._2))
       .maxBy(_._2._1)
@@ -127,6 +129,7 @@ object Ipog {
     val parametersNum = parameters.length
     val combinations = List.fill(t)(1) concat List.fill(parametersNum - t)(0)
     val testSet = combineValues(sortedParameters,combinations)
+    val originalTestSize = testSet.length
     /*
      * Función anidada extend
      */
@@ -134,23 +137,22 @@ object Ipog {
     def extend(testSet: List[OptCombination], newParameterIndex: Int): List[OptCombination] = {
       var piLeftovers: List[OptCombination] = List.empty
       //Función recursiva interna que recorre el juego de pruebas, añadiendo el valor máximo a la fila y actualizando pi
-      def horizontalExtend(testSet: List[OptCombination], piList: PiList, parameter: Parameter): List[OptCombination] = testSet match {
+      def horizontalExtend(testSet: List[OptCombination], piList: PiList, parameter: Parameter, iter: Int): List[OptCombination] = testSet match {
           case Nil => {
             piLeftovers = getLeftovers(piList)
             List.empty
           }
-          case head::tail => {
+          case head::tail if iter < originalTestSize => {
             val (newValue, coveredValues) = maxCoverageValue(parameter, head, piList)
             val updatedPiList = updatePi(piList, coveredValues)
-            val newRow = List(head :+ Some(newValue))
-            newRow ++ horizontalExtend(tail, updatedPiList, parameter)
+            val newRow = head :+ Some(newValue)
+            newRow +: horizontalExtend(tail, updatedPiList, parameter, iter + 1)
+          }
+          case head::tail => {
+            val newRow = head :+ Some(0)
+            newRow +: horizontalExtend(tail, piList, parameter, iter + 1)
           }
         }
-      /****
-       * Código principal de la función extend:
-       * Se intenta acceder al siguiente parámetro, en caso de que no exista se devuelve el juego, si existe se extiende.
-       * En cada recursión se crea una lista pi para el nuevo parámetro con el que se va a extender el juego de pruebas
-       ****/
       val piList = (for {
         parametersComb <- combineParameters(newParameterIndex + 1, t)
         if parametersComb(newParameterIndex) == 1
@@ -158,7 +160,7 @@ object Ipog {
       Try(sortedParameters(newParameterIndex)) match {
         case Failure(_) => testSet
         case Success(parameter) => {
-          val horizontalExtendedSet = horizontalExtend(testSet, piList, parameter)
+          val horizontalExtendedSet = horizontalExtend(testSet, piList, parameter, 0)
           val verticalExtendedSet = verticalExtend(horizontalExtendedSet, piLeftovers)
           extend(verticalExtendedSet, newParameterIndex + 1)
         }
