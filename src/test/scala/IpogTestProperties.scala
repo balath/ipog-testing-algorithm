@@ -3,7 +3,8 @@ import Ipog.{Parameter, ipog}
 import com.typesafe.scalalogging.Logger
 import munit.ScalaCheckSuite
 import org.scalacheck.Prop.{forAll,propBoolean}
-import org.scalacheck.{Gen, Shrink
+import org.scalacheck.{Gen, Shrink}
+
 import scala.io.Source
 import scala.language.postfixOps
 import scala.sys.process._
