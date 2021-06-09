@@ -1,174 +1,138 @@
-import scala.annotation.tailrec
 import scala.util.{Failure, Success, Try}
+import IpogTypes._
 
 object Ipog {
 
-  case class Parameter(name: String,dimension: Int)
-  type Combination = List[Int]
-  type OptCombination = List[Option[Int]]
-  type PiList = Map[Combination, List[OptCombination]]
-
-  def combineParameters(m: Int, n: Int): List[Combination] = {
-    @tailrec
-    def combine(lastCombination: Combination, acc: List[Combination]): List[Combination] = {
-      (lastCombination zip lastCombination.tail) lastIndexOf ((0, 1)) match {
+  def combineParameters(m: Int, n: Int): Vector[ParamComb] = {
+    def combine(lastCombination: ParamComb, acc: Vector[ParamComb]): Vector[ParamComb] = {
+      (lastCombination zip lastCombination.tail).lastIndexOf((0, 1)) match {
         case -1 => acc
         case g => {
           lastCombination.last match {
             case 1 => {
               val newCombination = lastCombination.updated(g, 1).updated(g + 1, 0)
-              combine(newCombination, acc.appended(newCombination))
+              combine(newCombination, acc :+ newCombination)
             }
             case 0 => {
-              val r = lastCombination take (g + 1) count (_ == 1)
-              val lastOnes = n - r - 1
-              val newCombination = lastCombination.lazyZip(0 to m).map {
-                case (_, index) if index >= m - lastOnes => 1
+              val r = lastCombination.take(g + 1).count(_ == 1)
+              val last1 = n - r - 1
+              val newCombination = lastCombination.zipWithIndex map {
+                case (_, index) if index >= m - last1 => 1
                 case (_, index) if index > g => 0
                 case (_, index) if index == g => 1
-                case (elem, _) => elem
+                case (num, _) => num
               }
-              combine(newCombination, acc.appended(newCombination))
+              combine(newCombination, acc :+ newCombination)
             }
           }
         }
       }
-    }
+    }//Fin de la función anidada combine
     m match {
-      case 0 => List.empty
+      case 0 => Vector.empty
       case _ => {
-        val initialCombination = List.fill(m - n)(0) concat List.fill(n)(1)
-        combine(initialCombination, List(initialCombination))
+        val initialCombination = Vector.fill(m - n)(0) ++ Vector.fill(n)(1)
+        combine(initialCombination, Vector(initialCombination))
       }
     }
   }
 
-  def combineValues(parameters: List[Parameter], combination: Combination): List[OptCombination] = {
-    @tailrec
-    def combine(parameters: Combination, acc: List[OptCombination]):List[OptCombination] = parameters match {
-      case Nil => acc
-      case maxDimension::tail =>  {
+  def combineValues(parameters: Vector[Parameter], combination: ParamComb): Vector[ValuesComb] = {
+    def combine(dimensions: Vector[Dimension], acc: Vector[ValuesComb]):Vector[ValuesComb] = Try(dimensions.head) match {
+      case Failure(_) => acc
+      case Success(dimension) =>  {
         val newList = for {
           accElem <- acc
-          newElem <- 0 to maxDimension
+          newElem <- 0 until dimension
         } yield accElem :+ Some(newElem)
-        combine(tail,newList)
+        combine(dimensions.tail,newList)
       }
-    }
-    val dimensions = (parameters zip combination).filter(_._2 == 1).map{case (Parameter(_,dimension),_) => dimension - 1}
-    combine(dimensions,List(List.empty))
-  }
-
-  def maxCoverageValue(currentParameter: Parameter, currentRow: OptCombination, pi: PiList): (Int,PiList) = {
-    val valueAndCoveredCombinations = for {
-      value <- 0 to currentParameter.dimension - 1
-      (parameters, values) <- pi
-      newRow = currentRow :+ Some(value)
-      matchedParametersValues = (parameters zip newRow).filter(_._1 == 1).map(_._2)
-      coveredValues = values.filter(equalsCombination(_,matchedParametersValues))
-      matches = coveredValues.length
-    } yield (value, matches, parameters -> coveredValues)
-
-    valueAndCoveredCombinations.foreach{case (value, matches, params) =>}
-
-    val (maxValue,(_, coveredCombinations)) = valueAndCoveredCombinations
-      .groupMapReduce(_._1)(tuple => (tuple._2, Map(tuple._3)))((comb1, comb2) => (comb1._1 + comb2._1, comb1._2 ++ comb2._2))
-      .maxBy(_._2._1)
-
-    (maxValue, coveredCombinations)
-  }
-
-  def equalsCombination(combi1: OptCombination, combi2: OptCombination): Boolean = (combi1,combi2) match {
-    case (Nil, Nil) => true
-    case (None::_, _) => true && equalsCombination(combi1.tail, combi2.tail)
-    case (_, None::_) => true && equalsCombination(combi1.tail, combi2.tail)
-    case (Some(n1)::_, Some(n2)::_) => (n1 == n2) && equalsCombination(combi1.tail, combi2.tail)
-    case _ => false
-  }
-
-  def updatePi(piList: PiList, coveredCombinations: PiList): PiList = for {
-    (parameters, values) <- piList
-    updatedValues = values.filterNot(coveredCombinations.getOrElse(parameters,List.empty).contains(_))
-  } yield parameters -> updatedValues
-
-  def getLeftovers(piList: PiList): List[OptCombination] = {
-    def insertWildcards(parameters: Combination, row: OptCombination): OptCombination = parameters match {
-      case Nil => List.empty
-      case 0::tail => None +: insertWildcards(tail, row)
-      case _ => row.head +: insertWildcards(parameters.tail, row.tail)
-    }
-    //Se "aplanan" y mapean todas las combinaciones de valores de la lista pi con los comodines
-    piList.flatMap { case (parameters, values) => values.map(insertWildcards(parameters, _)) }.toList
+    }//Fin de la función anidada combine
+    val dimensions = (parameters zip combination).filter(_._2 == 1).map(_._1.dimension)
+    combine(dimensions,Vector(Vector.empty))
   }
 
   /**
-   * Se consumen los "restos" de la lista Pi, comprobando si hay coincidencia con alguna combinación previa.
+   * Función principal de ipog
    */
-  @tailrec
-  def verticalExtend(testSet: List[OptCombination], piLeftovers: List[OptCombination]):List[OptCombination] =
-    piLeftovers match {
-      case Nil => testSet
-      case head::tail => {
-        testSet.indexWhere(equalsCombination(_, head)) match {
-          case -1 => verticalExtend(testSet :+ head, piLeftovers.tail)
-          case n => { //Reemplazo de los comodines por valores cuando hay coincidencia
-            val replacedCombination = (testSet(n) lazyZip head).map{
-              case (None, None) => None
-              case (None, Some(n)) => Some(n)
-              case (Some(n), None) => Some(n)
-              case (Some(n), Some(_)) => Some(n)
-            }
-            verticalExtend(testSet.updated(n, replacedCombination), tail)
-          }
-        }
-      }
-    }
-
-  def ipog(parameters: List[Parameter], t: Int):(List[Parameter],List[OptCombination]) = {
+  def ipog(parameters: Vector[Parameter], t: Int):(Vector[Parameter],Vector[ValuesComb]) = {
     val sortedParameters = parameters.sortBy(_.dimension)(Ordering.Int.reverse)
-    val parametersNum = parameters.length
-    val combinations = List.fill(t)(1) concat List.fill(parametersNum - t)(0)
-    val testSet = combineValues(sortedParameters,combinations)
+    val totalParameters = parameters.length
+    val tCombination = Vector.fill(t)(1) ++ Vector.fill(totalParameters - t)(0)
+    val testSet = combineValues(sortedParameters,tCombination)
     val originalTestSize = testSet.length
-    /*
-     * Función anidada extend
-     */
-    @tailrec
-    def extend(testSet: List[OptCombination], newParameterIndex: Int): List[OptCombination] = {
-      var piLeftovers: List[OptCombination] = List.empty
-      //Función recursiva interna que recorre el juego de pruebas, añadiendo el valor máximo a la fila y actualizando pi
-      def horizontalExtend(testSet: List[OptCombination], piList: PiList, parameter: Parameter, iter: Int): List[OptCombination] = testSet match {
-          case Nil => {
-            piLeftovers = getLeftovers(piList)
-            List.empty
-          }
-          case head::tail if iter < originalTestSize => {
-            val (newValue, coveredValues) = maxCoverageValue(parameter, head, piList)
-            val updatedPiList = updatePi(piList, coveredValues)
-            val newRow = head :+ Some(newValue)
-            newRow +: horizontalExtend(tail, updatedPiList, parameter, iter + 1)
-          }
-          case head::tail => {
-            val newRow = head :+ Some(0)
-            newRow +: horizontalExtend(tail, piList, parameter, iter + 1)
-          }
+    /* Función anidada que extiende el juego de pruebas */
+    def extend(testSet: Vector[ValuesComb], newParamIndex: Int, currentTestSize: Int): Vector[ValuesComb] = {
+      var piLeftovers: Vector[ValuesComb] = Vector.empty
+      def horizontalExtension(testSet: Vector[ValuesComb], piList: PiList, iter: Int): Vector[ValuesComb] =
+      Try(testSet.head) match {
+        case Failure(_) => {
+          piLeftovers = piList.getLeftovers
+          Vector.empty
         }
-      val piList = (for {
-        parametersComb <- combineParameters(newParameterIndex + 1, t)
-        if parametersComb(newParameterIndex) == 1
+        case Success(head) if iter < originalTestSize => {
+          val (newValue, coveredValues) = maxCoverageValue(parameters(newParamIndex), head, piList)
+          val updatedPiList = piList.updatePi(coveredValues)
+          val newRow = head :+ Some(newValue)
+          newRow +: horizontalExtension(testSet.tail, updatedPiList, iter + 1)
+        }
+        case Success(head) => (head :+ Some(0)) +: horizontalExtension(testSet.tail, piList, iter + 1)
+      } //Fin de horizontalExtension
+
+      lazy val piList = (for {
+        parametersComb <- combineParameters(newParamIndex + 1, t)
+        if parametersComb(newParamIndex) == 1
       } yield parametersComb -> combineValues(sortedParameters, parametersComb)).toMap
-      Try(sortedParameters(newParameterIndex)) match {
+
+      Try(sortedParameters(newParamIndex)) match {
         case Failure(_) => testSet
-        case Success(parameter) => {
-          val horizontalExtendedSet = horizontalExtend(testSet, piList, parameter, 0)
-          val verticalExtendedSet = verticalExtend(horizontalExtendedSet, piLeftovers)
-          extend(verticalExtendedSet, newParameterIndex + 1)
+        case Success(_) => {
+          val horizontalExtendedSet = horizontalExtension(testSet, piList, 0)
+          //val (horizontalExtendedSet, piLeftovers) = horizontalExtensionResult.splitAt(currentTestSize)
+          val verticalExtendedSet = verticalExtension(horizontalExtendedSet, piLeftovers)
+          extend(verticalExtendedSet, newParamIndex + 1, verticalExtendedSet.length)
         }
       }
     }//Fin de función anidada extend
-    parametersNum - t match {
+    totalParameters - t match {
       case 0 => (sortedParameters,testSet)
-      case _ => (sortedParameters, extend(testSet, t))
+      case _ => (sortedParameters, extend(testSet, t, originalTestSize))
     }
   }//Fin de función ipog
+
+  /**
+   * Para cada posible valor del nuevo parámetro, y para cada comb. de parámetros (con sus combs. de valores): Crea
+   * una nueva fila con el valor, ajustada a la comb. de parámetros, guarda las comb. de valores cubiertas y el número
+   * de combinaciones que cubre. Después, mediante: la agrupación por el nuevo valor usado(group), del número total y
+   * comb. cubiertas para cada comb. de parámetros(Map), y la suma de los totales y concatenación de las comb. cubiertas
+   * para cada valor(reduce), obteniendo finalmente el valor con mayor cobertura y sus comb.(maxBy(matches)).
+   */
+  def maxCoverageValue(currentParameter: Parameter, currentRow: ValuesComb, pi: PiList): (Int, PiList) = {
+    val valueAndCoveredCombinations = for {
+      value <- 0 until currentParameter.dimension
+      (parameters, values) <- pi
+      newRow = currentRow :+ Some(value)
+      newRowActiveParameters = (parameters zip newRow).filter(_._1 == 1).map(_._2)
+      coveredValuesCombinations = values.filter(_.equivTo(newRowActiveParameters))
+      matches = coveredValuesCombinations.length
+    } yield (value, matches, parameters -> coveredValuesCombinations)
+    val (maxValue, (_, coveredCombinations)) = valueAndCoveredCombinations
+      .groupMapReduce(_._1)(tuple => (tuple._2, Map(tuple._3)))((v1, v2) => (v1._1 + v2._1, v1._2 ++ v2._2))
+      .maxBy(_._2._1) //Se accede al primer elemento la tupla anidada => (maxValue, (matches, coveredCombinations))
+    (maxValue, coveredCombinations)
+  }
+
+  /**
+   * Extiende
+   */
+  def verticalExtension(testSet: Vector[ValuesComb], piLeftovers: Vector[ValuesComb]):Vector[ValuesComb] =
+    Try(piLeftovers.head) match {
+      case Failure(_) => testSet
+      case Success(head) => {
+        testSet.zipWithIndex.find(_._1.equivTo(head)) match {
+          case None => verticalExtension(testSet :+ head, piLeftovers.tail)
+          case Some((comb, n)) => verticalExtension(testSet.updated(n, head.replaceWildcards(comb)), piLeftovers.tail)
+        }
+      }
+    } //Fin de verticalExtension
 }
