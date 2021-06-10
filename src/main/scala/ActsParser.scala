@@ -1,9 +1,9 @@
 import java.io.{File, FileWriter}
 
-import IpogTypes._
+import Ipog.{OptCombination, Parameter}
 
 object ActsParser {
-  def testSetToActsInputFormat(parameters: Vector[Parameter], testSet: Vector[ValuesComb]): String = {
+  def testSetToActsInputFormat(parameters: List[Parameter], testSet: List[OptCombination]): String = {
     List(
       "[Parameter]",
       s"${parameters.foldLeft("")((z,param) => s"$z${param.name} (int) : ${(0 until param.dimension).mkString(", ")}\n")}",
@@ -18,7 +18,7 @@ object ActsParser {
     ).mkString("\n")
   }
 
-  def writeACTSInputFile(testSetString: String, fileName: String): Unit = {
+  def writeACTS(testSetString: String, fileName: String): Unit = {
     val fileWriter = new FileWriter(new File(fileName))
     fileWriter.write(testSetString)
     fileWriter.close()

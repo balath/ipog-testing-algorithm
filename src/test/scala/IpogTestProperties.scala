@@ -1,6 +1,5 @@
 import ActsParser._
-import IpogTypes.Parameter
-import Ipog.ipog
+import Ipog.{Parameter, ipog}
 import com.typesafe.scalalogging.Logger
 import munit.ScalaCheckSuite
 import org.scalacheck.Prop.{forAll,propBoolean}
@@ -22,20 +21,20 @@ class IpogDiferentialTest extends ScalaCheckSuite {
   val maxT = 5
 
   implicit val noShrinkInt: Shrink[Int] = Shrink.shrinkAny
-  implicit val noShrinkComb: Shrink[Vector[Int]] = Shrink.shrinkAny
+  implicit val noShrinkComb: Shrink[List[Int]] = Shrink.shrinkAny
 
   val genT = Gen.choose(2,maxT)
   val genDimension = Gen.choose(1,maxDimensions)
-  val genDimensions = Gen.containerOfN[Vector,Int](Random.between(1,maxParameters + 1),genDimension)
+  val genDimensions = Gen.containerOfN[List,Int](Random.between(1,maxParameters + 1),genDimension)
 
   property("Generated test set with ipog implementation should be equal to ACTS one") {
     forAll(genDimensions,genT){(dimensions, t) =>
       (t <= dimensions.length) ==> {
-        val parameters = dimensions.zipWithIndex.map{ case (dim, index) => Parameter(s"P${index + 1}", dim) }
+        val parameters = dimensions.zipWithIndex.map { case (dim, index) => Parameter(s"P${index + 1}", dim) }
         val inputFileName = s"$outputPath${System.currentTimeMillis}-inputTestSet.txt"
         val (outputParameters, testSet) = ipog(parameters, t)
         val testSetString = testSetToActsInputFormat(outputParameters, testSet)
-        writeACTSInputFile(testSetString, inputFileName)
+        writeACTS(testSetString, inputFileName)
 
         val outputFileName = inputFileName.replace("in", "out")
         val _ = s"java -jar -Dmode=extend -Doutput=csv -Drandstar=off -Dcheck=on -Ddoi=$t ./lib/acts_cmd_2.92.jar ActsConsoleManager $inputFileName $outputFileName" !!
@@ -52,6 +51,7 @@ class IpogDiferentialTest extends ScalaCheckSuite {
         bufferedSource.close()
 
         val coverageIsOk = ipogCongifurations - actsConfigurations == 0
+
         logger.info(
           s"Test ${
             if (coverageIsOk) "OK!"
