@@ -160,7 +160,7 @@ class IpogTest extends munit.FunSuite {
       case n => Some(n)
     })
 
-    val piLeftovers = getLeftovers(piList)
+    val piLeftovers = getPiRemains(piList)
     val obtained = verticalExtension(testSet, piLeftovers)
 
     assertEquals(obtained, expected)
