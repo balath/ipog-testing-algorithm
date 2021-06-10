@@ -1,6 +1,5 @@
 import ActsParser._
-import Ipog.ipog
-import IpogTypes._
+import Ipog.{Parameter, ipog}
 import com.typesafe.scalalogging.Logger
 import munit.ScalaCheckSuite
 import org.scalacheck.Prop.{forAll,propBoolean}
@@ -25,8 +24,8 @@ class IpogDiferentialTest extends ScalaCheckSuite {
   implicit val noShrinkComb: Shrink[Vector[Int]] = Shrink.shrinkAny
 
   val genT = Gen.choose(2,maxT)
-  val genDimension = Gen.choose(2,maxDimensions)
-  val genDimensions = Gen.containerOfN[Vector,Int](Random.between(1,maxParameters + 1),genDimension)
+  val genDimension = Gen.choose(3,maxDimensions)
+  val genDimensions = Gen.containerOfN[Vector,Int](Random.between(4,maxParameters + 1),genDimension)
 
   property("Generated test set with ipog implementation should be equal to ACTS one") {
     forAll(genDimensions,genT){(dimensions, t) =>

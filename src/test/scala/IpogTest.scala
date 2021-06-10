@@ -1,5 +1,4 @@
 import Ipog._
-import IpogTypes._
 import Utils.nCr
 
 class IpogTest extends munit.FunSuite {
@@ -120,9 +119,9 @@ class IpogTest extends munit.FunSuite {
     Vector(Vector(0, 1), Vector(1, 0), Vector(1, 1), Vector(2, 0), Vector(2, 1)).map(_.map(Some(_))))
     )
 
-    assertEquals(inputPi.updatePi(coveredCombinations), expected)
-    assertEquals(inputPi.updatePi(emptyCoveredCombinations), inputPi)
-    assertEquals(emptyPi.updatePi(coveredCombinations), emptyPi)
+    assertEquals(updatePi(inputPi,coveredCombinations), expected)
+    assertEquals(updatePi(inputPi,emptyCoveredCombinations), inputPi)
+    assertEquals(updatePi(emptyPi,coveredCombinations), emptyPi)
   }
 
   test("verticalExtend should reuse equivalents combinations with wildcards") {
@@ -161,7 +160,7 @@ class IpogTest extends munit.FunSuite {
       case n => Some(n)
     })
 
-    val piLeftovers = piList.getLeftovers
+    val piLeftovers = getLeftovers(piList)
     val obtained = verticalExtension(testSet, piLeftovers)
 
     assertEquals(obtained, expected)
