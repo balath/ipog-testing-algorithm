@@ -17,7 +17,7 @@ object Ipog {
           lastCombination.last match {
             case 1 => {
               val newCombination = lastCombination.updated(g, 1).updated(g + 1, 0)
-              combine(newCombination, acc.appended(newCombination))
+              combine(newCombination, acc :+ newCombination)
             }
             case 0 => {
               val r = lastCombination take (g + 1) count (_ == 1)
@@ -28,7 +28,7 @@ object Ipog {
                 case (_, index) if index == g => 1
                 case (elem, _) => elem
               }
-              combine(newCombination, acc.appended(newCombination))
+              combine(newCombination, acc :+ newCombination)
             }
           }
         }
@@ -69,8 +69,6 @@ object Ipog {
       matches = coveredValues.length
     } yield (value, matches, parameters -> coveredValues)
 
-    valueAndCoveredCombinations.foreach{case (value, matches, params) =>}
-
     val (maxValue,(_, coveredCombinations)) = valueAndCoveredCombinations
       .groupMapReduce(_._1)(tuple => (tuple._2, Map(tuple._3)))((comb1, comb2) => (comb1._1 + comb2._1, comb1._2 ++ comb2._2))
       .maxBy(_._2._1)
@@ -105,12 +103,12 @@ object Ipog {
    * Se consumen los "restos" de la lista Pi, comprobando si hay coincidencia con alguna combinación previa.
    */
   @tailrec
-  def verticalExtend(testSet: List[OptCombination], piLeftovers: List[OptCombination]):List[OptCombination] =
+  def verticalExtension(testSet: List[OptCombination], piLeftovers: List[OptCombination]):List[OptCombination] =
     piLeftovers match {
       case Nil => testSet
       case head::tail => {
         testSet.indexWhere(equalsCombination(_, head)) match {
-          case -1 => verticalExtend(testSet :+ head, piLeftovers.tail)
+          case -1 => verticalExtension(testSet :+ head, piLeftovers.tail)
           case n => { //Reemplazo de los comodines por valores cuando hay coincidencia
             val replacedCombination = (testSet(n) lazyZip head).map{
               case (None, None) => None
@@ -118,7 +116,7 @@ object Ipog {
               case (Some(n), None) => Some(n)
               case (Some(n), Some(_)) => Some(n)
             }
-            verticalExtend(testSet.updated(n, replacedCombination), tail)
+            verticalExtension(testSet.updated(n, replacedCombination), tail)
           }
         }
       }
@@ -134,41 +132,39 @@ object Ipog {
      * Función anidada extend
      */
     @tailrec
-    def extend(testSet: List[OptCombination], newParameterIndex: Int): List[OptCombination] = {
+    def extend(testSet: List[OptCombination], newParamIndex: Int, currentTestSize: Int): List[OptCombination] = {
       var piLeftovers: List[OptCombination] = List.empty
       //Función recursiva interna que recorre el juego de pruebas, añadiendo el valor máximo a la fila y actualizando pi
-      def horizontalExtend(testSet: List[OptCombination], piList: PiList, parameter: Parameter, iter: Int): List[OptCombination] = testSet match {
-          case Nil => {
-            piLeftovers = getLeftovers(piList)
-            List.empty
-          }
+      def horizontalExtension(testSet: List[OptCombination], piList: PiList, iter: Int): List[OptCombination] = testSet match {
+        case Nil => getLeftovers(piList)
           case head::tail if iter < originalTestSize => {
-            val (newValue, coveredValues) = maxCoverageValue(parameter, head, piList)
+            val (newValue, coveredValues) = maxCoverageValue(sortedParameters(newParamIndex), head, piList)
             val updatedPiList = updatePi(piList, coveredValues)
             val newRow = head :+ Some(newValue)
-            newRow +: horizontalExtend(tail, updatedPiList, parameter, iter + 1)
+            newRow +: horizontalExtension(tail, updatedPiList, iter + 1)
           }
           case head::tail => {
             val newRow = head :+ Some(0)
-            newRow +: horizontalExtend(tail, piList, parameter, iter + 1)
+            newRow +: horizontalExtension(tail, piList, iter + 1)
           }
         }
       val piList = (for {
-        parametersComb <- combineParameters(newParameterIndex + 1, t)
-        if parametersComb(newParameterIndex) == 1
+        parametersComb <- combineParameters(newParamIndex + 1, t)
+        if parametersComb(newParamIndex) == 1
       } yield parametersComb -> combineValues(sortedParameters, parametersComb)).toMap
-      Try(sortedParameters(newParameterIndex)) match {
+      Try(sortedParameters(newParamIndex)) match {
         case Failure(_) => testSet
-        case Success(parameter) => {
-          val horizontalExtendedSet = horizontalExtend(testSet, piList, parameter, 0)
-          val verticalExtendedSet = verticalExtend(horizontalExtendedSet, piLeftovers)
-          extend(verticalExtendedSet, newParameterIndex + 1)
+        case Success(_) => {
+          val horizontalExtensionResult = horizontalExtension(testSet, piList, 0)
+          val (horizontalExtendedSet, piLeftovers) = horizontalExtensionResult.splitAt(currentTestSize)
+          val verticalExtendedSet = verticalExtension(horizontalExtendedSet, piLeftovers)
+          extend(verticalExtendedSet, newParamIndex + 1, verticalExtendedSet.length)
         }
       }
     }//Fin de función anidada extend
     parametersNum - t match {
       case 0 => (sortedParameters,testSet)
-      case _ => (sortedParameters, extend(testSet, t))
+      case _ => (sortedParameters, extend(testSet, t, originalTestSize))
     }
   }//Fin de función ipog
 }

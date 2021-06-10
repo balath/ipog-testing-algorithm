@@ -161,7 +161,7 @@ class IpogTest extends munit.FunSuite {
     })
 
     val piLeftovers = getLeftovers(piList)
-    val obtained = verticalExtend(testSet, piLeftovers)
+    val obtained = verticalExtension(testSet, piLeftovers)
 
     assertEquals(obtained, expected)
   }
