@@ -1,0 +1,6 @@
+[System]
+Name: equivTo
+
+[Parameter]
+comb1 (enum) : V0, V4, V2, V5, V6, V7, V8
+comb2 (enum) : V0, V4, V2, V5, V6, V7, V8

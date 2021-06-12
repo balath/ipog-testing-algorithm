@@ -1,0 +1,14 @@
+# ACTS Test Suite Generation: Sat Jun 12 08:37:36 CEST 2021
+#  * represents don't care value 
+
+# Degree of interaction coverage: 1
+# Number of parameters: 2
+# Maximum number of values per parameter: 5
+# Number of configurations: 5
+# ****************************************************
+comb1,comb2
+V4,V2
+V2,V6
+V5,V7
+V6,V4
+V7,V6

@@ -37,8 +37,9 @@ object Ipog {
       }
     }
 
-    m match {
-      case 0 => Vector.empty
+    (m, n) match {
+      case (0, _) => Vector.empty
+      case (m, n) if m < 0 || n < 0 || m < n => throw new IllegalArgumentException("Parameters less than 0")
       case _ => {
         val initialCombination = Vector.fill(m - n)(0) concat Vector.fill(n)(1)
         combine(initialCombination, Vector(initialCombination))
@@ -49,7 +50,6 @@ object Ipog {
   def combineValues(parameters: Vector[Parameter], combination: ParamComb): Vector[ValuesComb] = {
     @tailrec
     def combine(dimensions: Vector[Dimension], acc: Vector[ValuesComb]): Vector[ValuesComb] = dimensions match {
-      case Vector() => acc
       case dimension +: tail => {
         val newVector = for {
           accElem <- acc
@@ -57,6 +57,7 @@ object Ipog {
         } yield accElem :+ Some(newElem)
         combine(tail, newVector)
       }
+      case _ => acc
     }
 
     val dimensions = (parameters zip combination).filter(_._2 == 1).map { case (Parameter(_, dimension), _) => dimension }
@@ -102,9 +103,9 @@ object Ipog {
 
   def getPiRemains(piList: PiList): Vector[ValuesComb] = {
     def insertWildcards(parameters: ParamComb, row: ValuesComb): ValuesComb = parameters match {
-      case Vector() => Vector.empty
       case 0 +: tail => None +: insertWildcards(tail, row)
       case _ +: tail => row.head +: insertWildcards(tail, row.tail)
+      case _ => Vector.empty
     }
 
     piList.flatMap { case (parameters, values) => values.map(insertWildcards(parameters, _)) }.toVector
@@ -113,13 +114,13 @@ object Ipog {
   @tailrec
   def verticalExtension(testSet: Vector[ValuesComb], piLeftovers: Vector[ValuesComb]): Vector[ValuesComb] =
     piLeftovers match {
-      case Vector() => testSet
       case head +: tail => {
         testSet.indexWhere(equivTo(_, head)) match {
           case -1 => verticalExtension(testSet :+ head, tail)
           case n => verticalExtension(testSet.updated(n, replaceWildcards(testSet(n), head)), tail)
         }
       }
+      case _ => testSet
     }
 
   def ipog(parameters: Vector[Parameter], t: Int): (Vector[Parameter], Vector[ValuesComb]) = {
@@ -132,17 +133,17 @@ object Ipog {
     @tailrec
     def extend(testSet: Vector[ValuesComb], newParamIndex: Int, currentTestSize: Int): Vector[ValuesComb] = {
       def horizontalExtension(testSet: Vector[ValuesComb], piList: PiList, iter: Int): Vector[ValuesComb] = testSet match {
-        case Vector() => getPiRemains(piList)
         case head +: tail if iter < originalTestSize => {
-          val (newValue, coveredValues) = maxCoverageValue(sortedParameters(newParamIndex), head, piList)
-          val updatedPiList = updatePi(piList, coveredValues)
-          val newRow = head :+ Some(newValue)
-          newRow +: horizontalExtension(tail, updatedPiList, iter + 1)
+            val (newValue, coveredValues) = maxCoverageValue(sortedParameters(newParamIndex), head, piList)
+            val updatedPiList = updatePi(piList, coveredValues)
+            val newRow = head :+ Some(newValue)
+            newRow +: horizontalExtension(tail, updatedPiList, iter + 1)
         }
         case head +: tail => {
-          val newRow = head :+ Some(0)
-          newRow +: horizontalExtension(tail, piList, iter + 1)
+            val newRow = head :+ Some(0)
+            newRow +: horizontalExtension(tail, piList, iter + 1)
         }
+        case _ => getPiRemains(piList)
       }
 
       val piList = (for {

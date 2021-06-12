@@ -1,0 +1,20 @@
+# ACTS Test Suite Generation: Fri Jun 11 13:16:43 CEST 2021
+#  * represents don't care value 
+
+# Degree of interaction coverage: 1
+# Number of parameters: 2
+# Maximum number of values per parameter: 4
+# Number of configurations: 4
+# ****************************************************
+parameters,combination
+PP1,C0
+PP0,C1
+PP1,C2
+PP1,C3
+
+# Valores sustituidos por las id.
+
+(("P1", 2), ("P2", 3), ("P3", 2), ("P4", 3), ("P5", 2)),Vector.empty
+Vector.empty,(0, 0, 0, 0, 0)
+(("P1", 2), ("P2", 3), ("P3", 2), ("P4", 3), ("P5", 2)),(1, 1, 1, 1, 1)
+(("P1", 2), ("P2", 3), ("P3", 2), ("P4", 3), ("P5", 2)),(1, 1, 0, 0, 1)

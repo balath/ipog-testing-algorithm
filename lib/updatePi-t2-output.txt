@@ -1,0 +1,26 @@
+# ACTS Test Suite Generation: Sat Jun 12 09:01:15 CEST 2021
+#  * represents don't care value 
+
+# Degree of interaction coverage: 2
+# Number of parameters: 2
+# Maximum number of values per parameter: 4
+# Number of configurations: 16
+# Number of extended configurations: 12
+# ****************************************************
+piList,coveredCombinations
+PI0,PI1
+PI1,PI2
+PI2,PI3
+PI3,PI0
+PI0,PI0
+PI1,PI0
+PI2,PI0
+PI1,PI1
+PI2,PI1
+PI3,PI1
+PI0,PI2
+PI2,PI2
+PI3,PI2
+PI0,PI3
+PI1,PI3
+PI3,PI3

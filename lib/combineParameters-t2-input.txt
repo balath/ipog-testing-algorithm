@@ -1,0 +1,13 @@
+[System]
+Name: combineParameters
+
+[Parameter]
+m (enum) : M1, M2, M3, M4
+n (enum) : N1, N2, N3, N4
+
+[Test Set]
+m,n
+M1,N2
+M2,N3
+M3,N4
+M4,N1

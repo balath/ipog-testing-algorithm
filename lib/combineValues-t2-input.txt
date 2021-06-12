@@ -1,0 +1,13 @@
+[System]
+Name: combineValues
+
+[Parameter]
+parameters (enum) : PP0,PP1
+combination (enum) : C0, C1, C2, C3
+
+[Test Set]
+parameters,combination
+PP1,C0
+PP0,C1
+PP1,C2
+PP1,C3

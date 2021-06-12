@@ -1,0 +1,21 @@
+[System]
+Name: replaceWildcards
+
+[Parameter]
+comb1 (enum) : V4, V2, V5, V6, V7
+comb2 (enum) : V4, V2, V5, V6, V7
+
+[Constraint]
+(comb1 = "V2") => (comb2 != "V5" && comb2 != "V7")
+(comb1 = "V5") => (comb2 != "V2" && comb2 != "V6")
+(comb1 = "V6") => (comb2 != "V5")
+(comb1 = "V7") => (comb2 != "V2")
+(comb1 != comb2)
+
+[Test Set]
+comb1,comb2
+V4,V2
+V2,V6
+V5,V7
+V6,V4
+V7,V6

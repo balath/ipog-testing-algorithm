@@ -1,0 +1,7 @@
+[System]
+Name: maxCoverageValue
+
+[Parameter]
+currentParameter (enum) : P1
+currentRow (enum) : V1, V2, V3
+piList (enum) : PI0, PI1, PI2

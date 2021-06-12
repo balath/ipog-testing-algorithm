@@ -1,0 +1,6 @@
+[System]
+Name: combineParameters
+
+[Parameter]
+m (enum) : M1, M2, M3, M4
+n (enum) : N1, N2, N3, N4
