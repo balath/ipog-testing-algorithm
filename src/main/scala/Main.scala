@@ -1,5 +1,5 @@
 import ActsParser._
-import Ipog.{Parameter, ipog}
+import Ipog.ipog
 
 import scala.io.Source
 import scala.language.postfixOps
@@ -28,12 +28,5 @@ object Main extends App {
         bufferedSource.close
       }
     }
-  }
-
-  def parseCsvTuples(tuples: Array[(String, Int)]): (Vector[Parameter], Int) = {
-    val (parametersTuples, tTuple) = tuples.span(!_._1.startsWith("t"))
-    val parameters = parametersTuples.map(tuple => Parameter(tuple._1, tuple._2)).toVector
-    val t = tTuple.head._2
-    (parameters, t)
   }
 }

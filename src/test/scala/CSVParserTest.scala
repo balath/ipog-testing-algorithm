@@ -1,9 +1,9 @@
 import Ipog.Parameter
-import Main._
+import ActsParser._
 
 
 
-class MainTest extends munit.FunSuite {
+class CSVParserTest extends munit.FunSuite {
 
 
   test("parseCsvTuples should format csv data for ipog implementation input"){
