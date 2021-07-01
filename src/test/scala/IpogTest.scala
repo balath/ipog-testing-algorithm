@@ -1,3 +1,4 @@
+import IpogTypes._
 import Ipog._
 import munit._
 
@@ -50,7 +51,7 @@ class IpogTest extends FunSuite {
     Vector(1, 0, 1) -> Vector(Vector(0, 0))
   )
 
-  test("ipog algorithm should return a tuple with parameter dimensions a proper test set") {
+  test("ipog algorithm should return a tuple with parameter dimensions and a proper test set") {
     val inputT = 2
     val expectedParameters: Vector[Parameter] = Vector(("P2", 3), ("P4", 3), ("P1", 2), ("P3", 2), ("P5", 2))
     val expectedTestSet: Vector[ValuesComb] = Vector(
@@ -98,9 +99,7 @@ class IpogTest extends FunSuite {
     }
     /* Test for invalid classes */
     invalidClasses.map {
-      case (m, n) => interceptMessage[IllegalArgumentException]("Parameters less than 0") {
-        combineParameters(m, n)
-      }
+      case (m, n) => assertEquals(combineParameters(m, n), Vector.empty)
     }
   }
 

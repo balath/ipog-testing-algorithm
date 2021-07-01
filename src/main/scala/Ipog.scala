@@ -1,27 +1,20 @@
 import scala.annotation.tailrec
 import scala.util.{Failure, Success, Try}
+import IpogTypes._
 
 object Ipog {
-
-  case class Parameter(name: String, dimension: Dimension)
-
-  type Dimension = Int
-  type ParamComb = Vector[Int]
-  type ValuesComb = Vector[Option[Int]]
-  type PiList = Map[ParamComb, Vector[ValuesComb]]
 
   def combineParameters(m: Int, n: Int): Vector[ParamComb] = {
     @tailrec
     def combine(lastCombination: ParamComb, acc: Vector[ParamComb]): Vector[ParamComb] = {
       (lastCombination zip lastCombination.tail) lastIndexOf ((0, 1)) match {
         case -1 => acc
-        case g => {
+        case g =>
           lastCombination.last match {
-            case 1 => {
+            case 1 =>
               val newCombination = lastCombination.updated(g, 1).updated(g + 1, 0)
               combine(newCombination, acc :+ newCombination)
-            }
-            case 0 => {
+            case 0 =>
               val r = lastCombination take (g + 1) count (_ == 1)
               val lastOnes = n - r - 1
               val newCombination = lastCombination.lazyZip(0 to m).map {
@@ -31,32 +24,28 @@ object Ipog {
                 case (elem, _) => elem
               }
               combine(newCombination, acc :+ newCombination)
-            }
           }
-        }
       }
     }
 
     (m, n) match {
       case (0, _) => Vector.empty
-      case (m, n) if m < 0 || n < 0 || m < n => throw new IllegalArgumentException("Parameters less than 0")
-      case _ => {
-        val initialCombination = Vector.fill(m - n)(0) concat Vector.fill(n)(1)
+      case (m, n) if m < 0 || n < 0 || m < n => Vector.empty
+      case _ =>
+        val initialCombination = Vector.fill(m - n)(0) ++ Vector.fill(n)(1)
         combine(initialCombination, Vector(initialCombination))
-      }
     }
   }
 
   def combineValues(parameters: Vector[Parameter], combination: ParamComb): Vector[ValuesComb] = {
     @tailrec
     def combine(dimensions: Vector[Dimension], acc: Vector[ValuesComb]): Vector[ValuesComb] = dimensions match {
-      case dimension +: tail => {
+      case dimension +: tail =>
         val newVector = for {
           accElem <- acc
           newElem <- 0 until dimension
         } yield accElem :+ Some(newElem)
         combine(tail, newVector)
-      }
       case _ => acc
     }
 
@@ -66,7 +55,7 @@ object Ipog {
 
   def maxCoverageValue(currentParameter: Parameter, currentRow: ValuesComb, pi: PiList): (Int, PiList) = {
     val valueAndCoveredCombinations = for {
-      value <- 0 to currentParameter.dimension - 1
+      value <- 0 until currentParameter.dimension
       (parameters, values) <- pi
       newRow = currentRow :+ Some(value)
       matchedParametersValues = (parameters zip newRow).filter(_._1 == 1).map(_._2)
@@ -81,6 +70,7 @@ object Ipog {
     (maxValue, coveredCombinations)
   }
 
+  @scala.annotation.tailrec
   def equivTo(comb1: ValuesComb, comb2: ValuesComb): Boolean = (comb1, comb2) match {
     case (Vector(), Vector()) => true
     case (None +: c1tail, _ +: c2tail) => equivTo(c1tail, c2tail)
@@ -112,14 +102,13 @@ object Ipog {
   }
 
   @tailrec
-  def verticalExtension(testSet: Vector[ValuesComb], piLeftovers: Vector[ValuesComb]): Vector[ValuesComb] =
-    piLeftovers match {
-      case head +: tail => {
+  def verticalExtension(testSet: Vector[ValuesComb], piRemains: Vector[ValuesComb]): Vector[ValuesComb] =
+    piRemains match {
+      case head +: tail =>
         testSet.indexWhere(equivTo(_, head)) match {
           case -1 => verticalExtension(testSet :+ head, tail)
           case n => verticalExtension(testSet.updated(n, replaceWildcards(testSet(n), head)), tail)
         }
-      }
       case _ => testSet
     }
 
@@ -133,16 +122,14 @@ object Ipog {
     @tailrec
     def extend(testSet: Vector[ValuesComb], newParamIndex: Int, currentTestSize: Int): Vector[ValuesComb] = {
       def horizontalExtension(testSet: Vector[ValuesComb], piList: PiList, iter: Int): Vector[ValuesComb] = testSet match {
-        case head +: tail if iter < originalTestSize => {
-            val (newValue, coveredValues) = maxCoverageValue(sortedParameters(newParamIndex), head, piList)
-            val updatedPiList = updatePi(piList, coveredValues)
-            val newRow = head :+ Some(newValue)
-            newRow +: horizontalExtension(tail, updatedPiList, iter + 1)
-        }
-        case head +: tail => {
-            val newRow = head :+ Some(0)
-            newRow +: horizontalExtension(tail, piList, iter + 1)
-        }
+        case head +: tail if iter < originalTestSize =>
+          val (newValue, coveredValues) = maxCoverageValue(sortedParameters(newParamIndex), head, piList)
+          val updatedPiList = updatePi(piList, coveredValues)
+          val newRow = head :+ Some(newValue)
+          newRow +: horizontalExtension(tail, updatedPiList, iter + 1)
+        case head +: tail =>
+          val newRow = head :+ Some(0)
+          newRow +: horizontalExtension(tail, piList, iter + 1)
         case _ => getPiRemains(piList)
       }
 
@@ -152,17 +139,16 @@ object Ipog {
       } yield parametersComb -> combineValues(sortedParameters, parametersComb)).toMap
       Try(sortedParameters(newParamIndex)) match {
         case Failure(_) => testSet
-        case Success(_) => {
+        case Success(_) =>
           val horizontalExtensionResult = horizontalExtension(testSet, piList, 0)
-          val (horizontalExtendedSet, piLeftovers) = horizontalExtensionResult.splitAt(currentTestSize)
-          val verticalExtendedSet = verticalExtension(horizontalExtendedSet, piLeftovers)
+          val (horizontalExtendedSet, piRemains) = horizontalExtensionResult.splitAt(currentTestSize)
+          val verticalExtendedSet = verticalExtension(horizontalExtendedSet, piRemains)
           extend(verticalExtendedSet, newParamIndex + 1, verticalExtendedSet.length)
-        }
       }
-    } //Fin de función anidada extend
+    } //End of extend function
     parametersNum - t match {
       case 0 => (sortedParameters, testSet)
       case _ => (sortedParameters, extend(testSet, t, originalTestSize))
     }
-  } //Fin de función ipog
+  } //End of ipog function
 }

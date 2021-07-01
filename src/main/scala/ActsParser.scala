@@ -1,6 +1,6 @@
 import java.io.{File, FileWriter}
+import IpogTypes.{Parameter, ValuesComb}
 
-import Ipog.{ValuesComb, Parameter}
 
 object ActsParser {
   def testSetToActsInputFormat(parameters: Vector[Parameter], testSet: Vector[ValuesComb]): String = {

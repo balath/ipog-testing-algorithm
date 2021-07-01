@@ -1,4 +1,4 @@
-import Ipog.Parameter
+import IpogTypes.Parameter
 import ActsParser._
 
 

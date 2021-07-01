@@ -1,5 +1,6 @@
 import ActsParser._
-import Ipog.{Parameter, ipog}
+import Ipog.ipog
+import IpogTypes.Parameter
 import com.typesafe.scalalogging.Logger
 import munit.ScalaCheckSuite
 import org.scalacheck.Gen
