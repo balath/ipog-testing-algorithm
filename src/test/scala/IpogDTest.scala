@@ -153,7 +153,7 @@ class IpogDTest extends FunSuite {
   test("ipog-D algorithm should return a tuple with parameters and a proper test set for t > 3") {
     val t = 5
     val (_, ipog2) = ipogD(eightParameters, t)
-    assertEquals(ipog2.length, 323)
+    assertEquals(ipog2.length, 395)
   }
 
 }

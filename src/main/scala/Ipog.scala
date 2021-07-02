@@ -18,9 +18,9 @@ object Ipog {
       matches = coveredValues.length
     } yield (value, matches, parameters -> coveredValues)
 
-    val (maxValue, (_, coveredCombinations)): (Int, (Any, PiList)) = valueAndCoveredCombinations
+    val (maxValue, (_, coveredCombinations)) = valueAndCoveredCombinations
       .groupMapReduce(_._1)(tuple => (tuple._2, Map(tuple._3)))((comb1, comb2) => (comb1._1 + comb2._1, comb1._2 ++ comb2._2))
-      .maxByOption(_._2._1).getOrElse(0, (Vector.empty, Map.empty))
+      .maxBy(_._2._1)
 
     (maxValue, coveredCombinations)
   }
