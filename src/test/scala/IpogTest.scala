@@ -1,4 +1,5 @@
 import IpogTypes._
+import Combiners._
 import Ipog._
 import munit._
 

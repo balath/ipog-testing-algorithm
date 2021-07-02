@@ -22,7 +22,7 @@ class IpogDDiferentialTest extends ScalaCheckSuite {
   val maxT = 10
 
   /* Parameters generators */
-  val genT = Gen.choose(2,maxT)
+  val genT = Gen.choose(3,maxT)
   val genDimension = Gen.choose(3,maxDimensions)
   val genDimensions = Gen.containerOfN[Vector,Int](Random.between(4,maxParameters + 1),genDimension)
 
@@ -61,7 +61,8 @@ class IpogDDiferentialTest extends ScalaCheckSuite {
           s"Test ${
             if (coverageIsOk) "OK!   "
             else "Failed"
-          } ACTS: ${f"$actsConfigurations%4d"} IpogD: ${f"$ipogConfigurations%4d"}  Diff: ${actsConfigurations-ipogConfigurations}"
+          } ACTS: ${f"$actsConfigurations%5d"} IpogD: ${f"$ipogConfigurations%5d"}  " +
+            s"Diff: ${((actsConfigurations-ipogConfigurations) * 100) / actsConfigurations}%"
         )
         assert(true)
       }

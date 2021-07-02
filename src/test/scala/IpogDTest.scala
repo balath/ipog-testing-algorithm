@@ -107,7 +107,7 @@ class IpogDTest extends FunSuite {
     Vector(1, 0, 1, 0, 0, 1)
   )
 
-  test("isUniform should check if all differences between active twin pairs are uniform"){
+  test("isNotUniform should check if all differences between active twin pairs are non-uniform"){
     val paramCombs: Vector[ParamComb] = Vector(
       Vector(1, 1, 0, 1, 1, 1, 0, 0, 1),
       Vector(1, 1, 1, 1, 1, 0, 1, 0, 0),
@@ -119,22 +119,22 @@ class IpogDTest extends FunSuite {
       Vector(2, 4, 2, 0, 2, 0)
     )
     val notUniformValuesComb: Vector[ValuesComb] = Vector(
-      Vector(2, 1, 2, 2, 2, 2),
-      Vector(2, 4, 0, 1, 1, 2),
-      Vector(2, 2, 2, 0, 3, 1)
+      Vector(2, 1, 2, 2, 2, 0),
+      Vector(2, 4, 0, 1, 1, 1),
+      Vector(2, 2, 2, 0, 3, 2)
     )
     val checkUniforms = for {
       paramComb <- paramCombs
       valueComb <- uniformValuesComb
-    } yield isUniform(paramComb, valueComb)
+    } yield isNotUniform(paramComb, valueComb)
 
     val checkNotUniforms = for {
       paramComb <- paramCombs
       valueComb <- notUniformValuesComb
-    } yield isUniform(paramComb, valueComb)
+    } yield isNotUniform(paramComb, valueComb)
 
-    assert(checkUniforms.forall(_ == true))
-    assert(checkNotUniforms.forall(_ == false))
+    assert(checkUniforms.forall(_ == false))
+    assert(checkNotUniforms.forall(_ == true))
   }
 
   test("checkDimensions should replace over dimension values with wildCards in a test set") {
@@ -153,7 +153,7 @@ class IpogDTest extends FunSuite {
   test("ipog-D algorithm should return a tuple with parameters and a proper test set for t > 3") {
     val t = 5
     val (_, ipog2) = ipogD(eightParameters, t)
-    assertEquals(ipog2.length, 395)
+    assertEquals(ipog2.length, 323)
   }
 
 }

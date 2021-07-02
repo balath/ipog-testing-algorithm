@@ -1,9 +1,15 @@
 import Ipog._
+import Combiners._
 import IpogTypes._
+import com.typesafe.scalalogging.Logger
+
 import scala.annotation.tailrec
 import scala.util.{Failure, Success, Try}
 
 object IpogD {
+
+  val log: Logger = Logger("IPOG-D")
+
 
   def doublingConstruct(testSet1: Vector[ValuesComb], testSet2: Vector[ValuesComb], dimension: Dimension): Vector[ValuesComb] = {
     val firstStep = testSet1.map(_.flatMap(value => List(value, value)))
@@ -49,7 +55,7 @@ object IpogD {
     (maxValue, coveredCombinations)
   }
 
-  def isUniform(paramComb: ParamComb, valuesComb: ValuesComb): Boolean = {
+  def isNotUniform(paramComb: ParamComb, valuesComb: ValuesComb): Boolean = {
     def getDifferences(paramComb: ParamComb, valuesComb: ValuesComb): Vector[Int] = (paramComb, valuesComb) match {
       case (p1 +: p2 +: ps, Some(v1) +: Some(v2) +: vs) if p1 == 1 && p2 == 1 => (v1 - v2).abs +: getDifferences(ps, vs)
       case (p1 +: p2 +: ps, _ +: vs) if p1 == 1 || p2 == 1 => getDifferences(ps, vs)
@@ -58,18 +64,13 @@ object IpogD {
     }
 
     val differences = getDifferences(paramComb, valuesComb)
-    val firstDifference = differences.head
-    differences.forall(_ == firstDifference)
+    differences == differences.distinct
   }
 
   def ipogD(parameters: Vector[Parameter], t: Int): (Vector[Parameter], Vector[ValuesComb]) = {
     val sortedParameters = parameters.sortBy(_.dimension)(Ordering.Int.reverse)
     val paramsLength = sortedParameters.length
-    val (g1, _) = sortedParameters
-      .foldLeft((Vector.empty: Vector[Parameter], true)) {
-        case ((odds, isOdd), parameter) if isOdd => (odds :+ parameter, false)
-        case ((odds, _), _) => (odds, true)
-      }
+    val g1 = sortedParameters.zipWithIndex.filter(_._2 % 2 == 0).map(_._1)
     val (_, ts1) = ipog(g1, t)
     val (_, ts2) = ipog(g1, t - 1)
     val ts = checkDimensions(doublingConstruct(ts1, ts2, g1.head.dimension), sortedParameters)
@@ -84,6 +85,7 @@ object IpogD {
           val (newValue, coveredValues) = maxCoverageValue(sortedParameters(newParamIndex), newParamIndex, head, piList)
           val updatedPiList = updatePi(piList, coveredValues)
           val newRow = head.updated(newParamIndex, Some(newValue))
+//          log.info(s"Updated parameter ${newParamIndex + 1} in row $newRow")
           newRow +: horizontalExtension(tail, updatedPiList, iter + 1)
         case head +: tail if head(newParamIndex).isEmpty =>
           val newRow = head.updated(newParamIndex, Some(0))
@@ -102,19 +104,19 @@ object IpogD {
 
       def combinePi(twinPairsCombsRange: Range, currentTwinPair: Vector[Int]): PiList = (for {
         n <- twinPairsCombsRange
-        twinPairsComb <- Ipog.combineParameters(twinPairsCovered, n)
+        twinPairsComb <- combineParameters(twinPairsCovered, n)
 
         paramsAfterCurrent = paramsLength - (newParamIndex + 1)
         twinPairsCompleted = twinPairsComb.flatMap(n => Vector(n, n)) ++ currentTwinPair ++ Vector.fill(paramsAfterCurrent)(0)
         (activeParamsWithIndex, nonActiveParamsWithIndex) = twinPairsCompleted.zipWithIndex.partition(_._1 == 1)
         singlesParamsWithIndex = nonActiveParamsWithIndex.count { case (_, index) => (index % 2 == 0) || (index < newParamIndex) }
-        singlesCombinations = Ipog.combineParameters(singlesParamsWithIndex, t - activeParamsWithIndex.length)
+        singlesCombinations = combineParameters(singlesParamsWithIndex, t - activeParamsWithIndex.length)
         singlesCombsWithIndex = singlesCombinations.map(updateSinglesParams(_, nonActiveParamsWithIndex, Vector.empty))
 
         singlesComb <- singlesCombsWithIndex
 
         sortedParametersComb = (activeParamsWithIndex ++ singlesComb).sortBy(_._2).map(_._1)
-        nonUniformValuesComb = combineValues(sortedParameters, sortedParametersComb).filter(!isUniform(sortedParametersComb, _))
+        nonUniformValuesComb = combineValues(sortedParameters, sortedParametersComb).filter(isNotUniform(sortedParametersComb, _))
       } yield sortedParametersComb -> nonUniformValuesComb).toMap
       //End of combinePi function
 

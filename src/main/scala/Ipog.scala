@@ -1,57 +1,12 @@
 import scala.annotation.tailrec
 import scala.util.{Failure, Success, Try}
 import IpogTypes._
+import Combiners._
+import com.typesafe.scalalogging.Logger
 
 object Ipog {
 
-  def combineParameters(m: Int, n: Int): Vector[ParamComb] = {
-    @tailrec
-    def combine(lastCombination: ParamComb, acc: Vector[ParamComb]): Vector[ParamComb] = {
-      (lastCombination zip lastCombination.tail) lastIndexOf ((0, 1)) match {
-        case -1 => acc
-        case g =>
-          lastCombination.last match {
-            case 1 =>
-              val newCombination = lastCombination.updated(g, 1).updated(g + 1, 0)
-              combine(newCombination, acc :+ newCombination)
-            case 0 =>
-              val r = lastCombination take (g + 1) count (_ == 1)
-              val lastOnes = n - r - 1
-              val newCombination = lastCombination.lazyZip(0 to m).map {
-                case (_, index) if index >= m - lastOnes => 1
-                case (_, index) if index > g => 0
-                case (_, index) if index == g => 1
-                case (elem, _) => elem
-              }
-              combine(newCombination, acc :+ newCombination)
-          }
-      }
-    }
-
-    (m, n) match {
-      case (0, _) => Vector.empty
-      case (m, n) if m < 0 || n < 0 || m < n => Vector.empty
-      case _ =>
-        val initialCombination = Vector.fill(m - n)(0) ++ Vector.fill(n)(1)
-        combine(initialCombination, Vector(initialCombination))
-    }
-  }
-
-  def combineValues(parameters: Vector[Parameter], combination: ParamComb): Vector[ValuesComb] = {
-    @tailrec
-    def combine(dimensions: Vector[Dimension], acc: Vector[ValuesComb]): Vector[ValuesComb] = dimensions match {
-      case dimension +: tail =>
-        val newVector = for {
-          accElem <- acc
-          newElem <- 0 until dimension
-        } yield accElem :+ Some(newElem)
-        combine(tail, newVector)
-      case _ => acc
-    }
-
-    val dimensions = (parameters zip combination).filter(_._2 == 1).map { case (Parameter(_, dimension), _) => dimension }
-    combine(dimensions, Vector(Vector.empty))
-  }
+  val log: Logger = Logger("IPOG")
 
   def maxCoverageValue(currentParameter: Parameter, currentRow: ValuesComb, pi: PiList): (Int, PiList) = {
     val valueAndCoveredCombinations = for {
@@ -63,14 +18,14 @@ object Ipog {
       matches = coveredValues.length
     } yield (value, matches, parameters -> coveredValues)
 
-    val (maxValue, (_, coveredCombinations)) = valueAndCoveredCombinations
+    val (maxValue, (_, coveredCombinations)): (Int, (Any, PiList)) = valueAndCoveredCombinations
       .groupMapReduce(_._1)(tuple => (tuple._2, Map(tuple._3)))((comb1, comb2) => (comb1._1 + comb2._1, comb1._2 ++ comb2._2))
-      .maxBy(_._2._1)
+      .maxByOption(_._2._1).getOrElse(0, (Vector.empty, Map.empty))
 
     (maxValue, coveredCombinations)
   }
 
-  @scala.annotation.tailrec
+  @tailrec
   def equivTo(comb1: ValuesComb, comb2: ValuesComb): Boolean = (comb1, comb2) match {
     case (Vector(), Vector()) => true
     case (None +: c1tail, _ +: c2tail) => equivTo(c1tail, c2tail)
@@ -106,8 +61,12 @@ object Ipog {
     piRemains match {
       case head +: tail =>
         testSet.indexWhere(equivTo(_, head)) match {
-          case -1 => verticalExtension(testSet :+ head, tail)
-          case n => verticalExtension(testSet.updated(n, replaceWildcards(testSet(n), head)), tail)
+          case -1 =>
+            //log.info(s"Combination $head from piRemains added")
+            verticalExtension(testSet :+ head, tail)
+          case n =>
+            //log.info(s"Combination $head from piRemains updated")
+            verticalExtension(testSet.updated(n, replaceWildcards(testSet(n), head)), tail)
         }
       case _ => testSet
     }
