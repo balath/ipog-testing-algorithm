@@ -12,13 +12,13 @@ object IpogD {
 
 
   def doublingConstruct(testSet1: Vector[ValuesComb], testSet2: Vector[ValuesComb], dimension: Dimension): Vector[ValuesComb] = {
-    val firstStep = testSet1.map(_.flatMap(value => List(value, value)))
+    val firstStep = testSet1.map(_.flatMap(value => Vector(value, value)))
     val secondStep = for {
       i <- 1 until dimension
       combination <- testSet2
       expandedCombination = combination.flatMap {
-        case Some(value) => List(Some(value), Some((value + i) % dimension))
-        case None => List(None, None)
+        case Some(value) => Vector(Some(value), Some((value + i) % dimension))
+        case None => Vector(None, None)
       }
     } yield expandedCombination
     firstStep ++ secondStep
@@ -38,23 +38,6 @@ object IpogD {
     }
   } yield newValueComb
 
-  def maxCoverageValue(currentParameter: Parameter, currentParamIndex: Int, currentRow: ValuesComb, pi: PiList): (Int, PiList) = {
-    val valueAndCoveredCombinations = for {
-      value <- 0 until currentParameter.dimension
-      (parameters, values) <- pi
-      newRow = currentRow.updated(currentParamIndex, Some(value)) //En vez de añadir el valor al final, se sustituye por el None
-      matchedParametersValues = (parameters zip newRow).filter(_._1 == 1).map(_._2)
-      coveredValues = values.filter(equivTo(_, matchedParametersValues))
-      matches = coveredValues.length
-    } yield (value, matches, parameters -> coveredValues)
-
-    val (maxValue, (_, coveredCombinations)): (Int, (Any, PiList)) = valueAndCoveredCombinations
-      .groupMapReduce(_._1)(tuple => (tuple._2, Map(tuple._3)))((comb1, comb2) => (comb1._1 + comb2._1, comb1._2 ++ comb2._2))
-      .maxByOption(_._2._1).getOrElse(0, (Vector.empty, Map.empty))
-
-    (maxValue, coveredCombinations)
-  }
-
   def isNotUniform(paramComb: ParamComb, valuesComb: ValuesComb): Boolean = {
     def getDifferences(paramComb: ParamComb, valuesComb: ValuesComb): Vector[Int] = (paramComb, valuesComb) match {
       case (p1 +: p2 +: ps, Some(v1) +: Some(v2) +: vs) if p1 == 1 && p2 == 1 => (v1 - v2).abs +: getDifferences(ps, vs)
@@ -64,7 +47,24 @@ object IpogD {
     }
 
     val differences = getDifferences(paramComb, valuesComb)
-    differences == differences.distinct
+    differences.length == differences.distinct.length
+  }
+
+  def maxCoverageValue(currentParameter: Parameter, currentParamIndex: Int, currentRow: ValuesComb, pi: PiList): (Int, PiList) = {
+    val valueAndCoveredCombinations = for {
+    value <- 0 until currentParameter.dimension
+    (parameters, values) <- pi
+    newRow = currentRow.updated(currentParamIndex, Some(value)) //En vez de añadir el valor al final, se sustituye por el None
+    matchedParametersValues = (parameters zip newRow).filter(_._1 == 1).map(_._2)
+    coveredValues = values.filter(equivTo(_, matchedParametersValues))
+    matches = coveredValues.length
+    } yield (value, matches, parameters -> coveredValues)
+
+    val (maxValue, (_, coveredCombinations)): (Int, (Any, PiList)) = valueAndCoveredCombinations
+      .groupMapReduce(_._1)(tuple => (tuple._2, Map(tuple._3)))((comb1, comb2) => (comb1._1 + comb2._1, comb1._2 ++ comb2._2))
+      .maxByOption(_._2._1).getOrElse(0, (Vector.empty, Map.empty))
+
+    (maxValue, coveredCombinations)
   }
 
   def ipogD(parameters: Vector[Parameter], t: Int): (Vector[Parameter], Vector[ValuesComb]) = {
@@ -77,7 +77,7 @@ object IpogD {
     val originalTestSize = ts.length
 
     @tailrec
-    def extend(ts: Vector[ValuesComb], newParamIndex: Int, currentTestSize: Dimension): Vector[ValuesComb] = {
+    def extend(ts: Vector[ValuesComb], newParamIndex: Int, currentTestSize: Int): Vector[ValuesComb] = {
       val twinPairsCovered = ((newParamIndex + 1) / 2) - 1
 
       def horizontalExtension(testSet: Vector[ValuesComb], piList: PiList, iter: Int): Vector[ValuesComb] = testSet match {
@@ -85,7 +85,6 @@ object IpogD {
           val (newValue, coveredValues) = maxCoverageValue(sortedParameters(newParamIndex), newParamIndex, head, piList)
           val updatedPiList = updatePi(piList, coveredValues)
           val newRow = head.updated(newParamIndex, Some(newValue))
-//          log.info(s"Updated parameter ${newParamIndex + 1} in row $newRow")
           newRow +: horizontalExtension(tail, updatedPiList, iter + 1)
         case head +: tail if head(newParamIndex).isEmpty =>
           val newRow = head.updated(newParamIndex, Some(0))
@@ -140,8 +139,5 @@ object IpogD {
       case _ => (sortedParameters, extend(ts, 1, originalTestSize))
     }
 
-  } //End of ipog function
+  } //End of ipogD function
 }
-
-
-//java -jar -Doutput=csv -Drandstar=off -Dcheck=on -Ddoi=2 ./lib/acts_cmd_2.92.jar ActsConsoleManager ./lib/input.txt out.txt
