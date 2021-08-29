@@ -11,7 +11,7 @@ import scala.sys.process._
 import scala.util.Random
 
 class IpogDiferentialTest extends ScalaCheckSuite {
-  val logger = Logger("Dif. Test")
+  val logger = Logger("IPOG Dif. Test")
 
   val osName = System.getProperty("os.name")
   val outputPath = if (osName.toLowerCase.contains("windows")) ".\\src\\test\\" else "./src/test/"
@@ -31,8 +31,10 @@ class IpogDiferentialTest extends ScalaCheckSuite {
       (t <= dimensions.length) ==> {
         /* Test Set is generated and written as ACTS input file */
         val parameters = dimensions.zipWithIndex.map { case (dim, index) => Parameter(s"P${index + 1}", dim) }
-        val inputFileName = s"$outputPath${System.currentTimeMillis}-inputTestSet.txt"
+        val timeA = System.currentTimeMillis()
         val (outputParameters, testSet) = ipog(parameters, t)
+        val timeB = System.currentTimeMillis()
+        val inputFileName = s"$outputPath${timeA}-inputTestSet.txt"
         val testSetString = testSetToActsInputFormat(outputParameters, testSet)
         writeACTS(testSetString, inputFileName)
 
@@ -60,7 +62,9 @@ class IpogDiferentialTest extends ScalaCheckSuite {
           s"Test ${
             if (coverageIsOk) "OK!"
             else "Failed"
-          } ACTS: $actsConfigurations Ipog: $ipogCongifurations"
+          } ACTS: $actsConfigurations Ipog: $ipogCongifurations" +
+            s"\n\t\tParameters: ${parameters.map(p => s"(${p.name}, ${p.dimension})").mkString(", ")} t: $t" +
+            s"\n\t\tIpogD process time: ${timeB-timeA} ms"
         )
         assert(coverageIsOk)
       }

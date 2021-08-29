@@ -3,7 +3,7 @@
 
 ## Ipog algorithm
 
-Implementation work of the Ipog algorithm for the Computer Engineering subject "Software Testing".
+Implementation work of the Ipog algorithm for the Computer Engineering course "Software Testing".
 
 The Ipog algorithm is described in this [paper](IPOG_A_general_strategy_for_T-way_software_testing.pdf).
 
@@ -23,3 +23,16 @@ efficient implementation of the generalized IPO strategy.
 IPOG strategy builds a t-way test set for the first t parameters, extends the test set to build a t-way test
 set for the first t + 1 parameters, and then continues to extend the test set until it builds a t-way test set for
 all the parameters.
+
+## Running Implementations Tests
+There are two ways to run ipog and ipog-D implementations tests:  
+##### Github Actions
+1. Go to [actions page](https://github.com/balath/ipog-testing-algorithm/actions) of the repository.
+2. Select the last workflow (or which you want). 
+3. In the upper-right corner of the workflow, use the **Re-run jobs** drop-down menu, and select **Re-run all jobs** for run tests again.
+##### Scala Build Tool (sbt)
+1. [Download](https://www.scala-sbt.org/download.html) and install sbt.
+2. Fork and clone this repository.
+3. Open your command line interface and go to project root folder and run:
+
+`> sbt test`

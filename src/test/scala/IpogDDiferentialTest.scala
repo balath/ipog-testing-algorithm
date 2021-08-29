@@ -12,28 +12,30 @@ import scala.sys.process._
 import scala.util.Random
 
 class IpogDDiferentialTest extends ScalaCheckSuite {
-  val logger = Logger("Dif. Test")
+  val logger = Logger("IPOG-D Dif. Test")
 
   val osName = System.getProperty("os.name")
   val outputPath = if (osName.toLowerCase.contains("windows")) ".\\src\\test\\" else "./src/test/"
 
   val maxParameters = 10
   val maxDimensions = 4
-  val maxT = 10
+  val maxT = 6
 
   /* Parameters generators */
-  val genT = Gen.choose(3,maxT)
-  val genDimension = Gen.choose(3,maxDimensions)
-  val genDimensions = Gen.containerOfN[Vector,Int](Random.between(4,maxParameters + 1),genDimension)
+  val genT = Gen.choose(3, maxT)
+  val genDimension = Gen.choose(3, maxDimensions)
+  val genDimensions = Gen.containerOfN[Vector, Int](Random.between(4, maxParameters + 1), genDimension)
 
   /* Property test */
   property("Generated test set with ipog implementation should be equal to ACTS one") {
-    forAll(genDimensions,genT){(dimensions, t) =>
+    forAll(genDimensions, genT) { (dimensions, t) =>
       (t <= dimensions.length) ==> {
         /* Test Set is generated and written as ACTS input file */
         val parameters = dimensions.zipWithIndex.map { case (dim, index) => Parameter(s"P${index + 1}", dim) }
-        val inputFileName = s"$outputPath${System.currentTimeMillis}-inputTestSet.txt"
+        val timeA = System.currentTimeMillis
         val (outputParameters, testSet) = ipogD(parameters, t)
+        val timeB = System.currentTimeMillis
+        val inputFileName = s"$outputPath${timeA}-inputTestSet.txt"
         val testSetString = testSetToActsInputFormat(outputParameters, testSet)
         writeACTS(testSetString, inputFileName)
 
@@ -62,7 +64,9 @@ class IpogDDiferentialTest extends ScalaCheckSuite {
             if (coverageIsOk) "OK!   "
             else "Failed"
           } ACTS: ${f"$actsConfigurations%5d"} IpogD: ${f"$ipogConfigurations%5d"}  " +
-            s"Diff: ${((actsConfigurations-ipogConfigurations) * 100) / actsConfigurations}%"
+            s"Diff: ${((actsConfigurations - ipogConfigurations) * 100) / actsConfigurations}%" +
+            s"\n\t\tParameters: ${parameters.map(p => s"(${p.name}, ${p.dimension})").mkString(", ")} t: $t" +
+            s"\n\t\tIpogD process time: ${timeB-timeA} ms"
         )
         assert(true)
       }
