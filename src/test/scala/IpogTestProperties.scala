@@ -5,13 +5,15 @@ import com.typesafe.scalalogging.Logger
 import munit.ScalaCheckSuite
 import org.scalacheck.Gen
 import org.scalacheck.Prop.{forAll, propBoolean}
+
 import scala.io.Source
+import scala.io.AnsiColor.{GREEN, RESET}
 import scala.language.postfixOps
 import scala.sys.process._
 import scala.util.Random
 
 class IpogDiferentialTest extends ScalaCheckSuite {
-  val logger = Logger("IPOG Dif. Test")
+  val logger = Logger(s"${GREEN}IPOG Dif. Test")
 
   val osName = System.getProperty("os.name")
   val outputPath = if (osName.toLowerCase.contains("windows")) ".\\src\\test\\" else "./src/test/"
@@ -64,7 +66,7 @@ class IpogDiferentialTest extends ScalaCheckSuite {
             else "Failed"
           } ACTS: $actsConfigurations Ipog: $ipogCongifurations" +
             s"\n\t\tParameters: ${parameters.map(p => s"(${p.name}, ${p.dimension})").mkString(", ")} t: $t" +
-            s"\n\t\tIpogD process time: ${timeB-timeA} ms"
+            s"\n\t\tIpog process time: ${timeB-timeA} ms${RESET}"
         )
         assert(coverageIsOk)
       }

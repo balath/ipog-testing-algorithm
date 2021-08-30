@@ -7,12 +7,13 @@ import org.scalacheck.Gen
 import org.scalacheck.Prop.{forAll, propBoolean}
 
 import scala.io.Source
+import scala.io.AnsiColor.{RED, RESET}
 import scala.language.postfixOps
 import scala.sys.process._
 import scala.util.Random
 
 class IpogDDiferentialTest extends ScalaCheckSuite {
-  val logger = Logger("IPOG-D Dif. Test")
+  val logger = Logger(s"${RED}IPOG-D Dif. Test")
 
   val osName = System.getProperty("os.name")
   val outputPath = if (osName.toLowerCase.contains("windows")) ".\\src\\test\\" else "./src/test/"
@@ -66,7 +67,7 @@ class IpogDDiferentialTest extends ScalaCheckSuite {
           } ACTS: ${f"$actsConfigurations%5d"} IpogD: ${f"$ipogConfigurations%5d"}  " +
             s"Diff: ${((actsConfigurations - ipogConfigurations) * 100) / actsConfigurations}%" +
             s"\n\t\tParameters: ${parameters.map(p => s"(${p.name}, ${p.dimension})").mkString(", ")} t: $t" +
-            s"\n\t\tIpogD process time: ${timeB-timeA} ms"
+            s"\n\t\tIpogD process time: ${timeB-timeA} ms${RESET}"
         )
         assert(true)
       }
