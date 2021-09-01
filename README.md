@@ -24,6 +24,23 @@ IPOG strategy builds a t-way test set for the first t parameters, extends the te
 set for the first t + 1 parameters, and then continues to extend the test set until it builds a t-way test set for
 all the parameters.
 
+### Ipog-D algorithm
+
+The Ipog-D algorithm is described in this [paper](IPOG_IPOGD_Efficient_test_generation_for_multi-way_combinatorial_testing.pdf).
+
+>
+>Summary
+>
+>This paper presents two strategies for multi-way testing (i.e. t-way testing with t>2). The first strategy
+ generalizes an existing strategy, called in-parameter-order, from pairwise testing to multi-way testing. This
+ strategy requires all multi-way combinations to be explicitly enumerated. When the number of multi-way
+ combinations is large, however, explicit enumeration can be prohibitive in terms of both the space for
+ storing these combinations and the time needed to enumerate them. To alleviate this problem, the second
+ strategy combines the first strategy with a recursive construction procedure to reduce the number of
+ multi-way combinations that have to be enumerated. Both strategies are deterministic, i.e. they always
+ produce the same test set for the same system configuration. This paper reports a multi-way testing tool
+ called FireEye, and provides an analytic and experimental evaluation of the two strategies. 
+
 ## Running Implementations Tests
 There are two ways to run ipog and ipog-D implementations tests:  
 ##### Github Actions
@@ -33,6 +50,6 @@ There are two ways to run ipog and ipog-D implementations tests:
 ##### Scala Build Tool (sbt)
 1. [Download](https://www.scala-sbt.org/download.html) and install sbt.
 2. Fork and clone this repository.
-3. Open your command line interface and go to project root folder and run:
+3. Open your command line interface, go to project root folder and run:
 
 `> sbt test`
