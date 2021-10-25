@@ -17,9 +17,9 @@ class IpogDDiferentialTest extends ScalaCheckSuite {
   val osName = System.getProperty("os.name")
   val outputPath = if (osName.toLowerCase.contains("windows")) ".\\src\\test\\" else "./src/test/"
 
-  val maxParameters = 10
+  val maxParameters = 8
   val maxDimensions = 4
-  val maxT = 6
+  val maxT = 5
 
   /* Parameters generators */
   val genT = Gen.choose(3, maxT)

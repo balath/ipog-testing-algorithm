@@ -142,6 +142,3 @@ object IpogD {
 
   } //End of ipog function
 }
-
-
-//java -jar -Doutput=csv -Drandstar=off -Dcheck=on -Ddoi=2 ./lib/acts_cmd_2.92.jar ActsConsoleManager ./lib/input.txt out.txt

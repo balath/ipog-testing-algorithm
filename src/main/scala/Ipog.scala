@@ -92,7 +92,7 @@ object Ipog {
         case _ => getPiRemains(piList)
       }
 
-      val piList = (for {
+      lazy val piList = (for {
         parametersComb <- combineParameters(newParamIndex + 1, t)
         if parametersComb(newParamIndex) == 1
       } yield parametersComb -> combineValues(sortedParameters, parametersComb)).toMap
@@ -105,9 +105,6 @@ object Ipog {
           extend(verticalExtendedSet, newParamIndex + 1, verticalExtendedSet.length)
       }
     } //End of extend function
-    parametersNum - t match {
-      case 0 => (sortedParameters, testSet)
-      case _ => (sortedParameters, extend(testSet, t, originalTestSize))
-    }
+    if (parametersNum - t == 0) (sortedParameters, testSet) else (sortedParameters, extend(testSet, t, originalTestSize))
   } //End of ipog function
 }
