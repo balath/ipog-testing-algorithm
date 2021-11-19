@@ -1,15 +1,10 @@
-import java.io.{BufferedReader, BufferedWriter, FileReader, FileWriter}
+import java.io.{BufferedWriter, FileWriter}
 import IpogTypes.{Parameter, ValuesComb}
-import cats.effect.IO
-import cats.effect.Resource
-import scala.jdk.CollectionConverters.IteratorHasAsScala
-
+import cats.effect.{IO, Resource}
 
 object ioUtils {
 
-  lazy val readerException = new RuntimeException("csv data format error(not header present or invalid number format)")
-
-  val parseCsvParameters = (csvData: Vector[String]) => {
+  def parseCsvParameters(csvData: Vector[String]): (Vector[Parameter], Int) = {
     val dataRow = csvData.drop(1).head.split(",").map(_.trim.toInt).toVector
     val (dimensions, t) = dataRow.splitAt(dataRow.length - 1)
     val parameters = dimensions.zip(1 to dimensions.length).map(t => Parameter(s"P${t._2}", t._1))
@@ -18,13 +13,15 @@ object ioUtils {
 
   def readFromCsv(fileName: String): IO[(Vector[Parameter], Int)] =
     Resource
-      .fromAutoCloseable(IO(new BufferedReader(new FileReader(fileName))))
+      .fromAutoCloseable(IO(scala.io.Source.fromFile(fileName)))
       .use(reader =>
-        IO(parseCsvParameters(reader.lines().iterator().asScala.toVector))
-          .handleErrorWith(t => IO.raiseError(readerException))
+        IO(parseCsvParameters(reader.getLines.toVector))
+          .handleErrorWith(_ => IO.raiseError(
+            new RuntimeException("csv data format error(not header present or invalid number format)")
+          ))
       )
 
-  val testSetToActsInputFormat = (parameters: Seq[Parameter], testSet: Seq[ValuesComb]) => {
+  def testSetToActsInputFormat(parameters: Seq[Parameter], testSet: Seq[ValuesComb]): String = {
     Vector(
     "[Parameter]",
     s"${parameters.foldLeft("")((z,param) => s"$z${param.name} (int) : ${(0 until param.dimension).mkString(", ")}\n")}",
