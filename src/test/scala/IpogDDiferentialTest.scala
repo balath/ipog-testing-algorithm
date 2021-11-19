@@ -1,4 +1,4 @@
-import ActsUtils._
+import ioUtils._
 import IpogD.ipogD
 import IpogTypes.Parameter
 import com.typesafe.scalalogging.Logger
@@ -40,7 +40,7 @@ class IpogDDiferentialTest extends ScalaCheckSuite {
             val timeB = System.currentTimeMillis
             val inputFileName = s"$outputPath${timeA}-inputTestSet.txt"
             val testSetString = testSetToActsInputFormat(outputParameters, testSet)
-            writeACTS(testSetString, inputFileName)
+            writeActsFile(testSetString, inputFileName)
 
             /* ACTS extended file is generated */
             val outputFileName = inputFileName.replace("in", "out")
