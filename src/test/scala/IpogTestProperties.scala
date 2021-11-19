@@ -1,7 +1,7 @@
-import ioUtils._
 import Ipog.ipog
 import IpogTypes.Parameter
 import com.typesafe.scalalogging.Logger
+import ioUtils._
 import munit.ScalaCheckSuite
 import org.scalacheck.Gen
 import org.scalacheck.Prop.{forAll, propBoolean}
@@ -10,8 +10,10 @@ import scala.io.AnsiColor._
 import scala.io.Source
 import scala.language.postfixOps
 import scala.sys.process._
+import cats.effect.unsafe.implicits.global
 
 class IpogDiferentialTest extends ScalaCheckSuite {
+
   val logger = Logger(s"$GREEN_B$BLACK IPOG Dif. Test $RESET")
 
   val osName = System.getProperty("os.name")
@@ -40,7 +42,7 @@ class IpogDiferentialTest extends ScalaCheckSuite {
             val timeB = System.currentTimeMillis()
             val inputFileName = s"$outputPath${timeA}-inputTestSet.txt"
             val testSetString = testSetToActsInputFormat(outputParameters, testSet)
-            writeActsFile(testSetString, inputFileName)
+            writeActsFile(testSetString, inputFileName).unsafeRunSync()
 
             /* ACTS extended file is generated */
             val outputFileName = inputFileName.replace("in", "out")
