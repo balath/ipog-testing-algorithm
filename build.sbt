@@ -8,8 +8,6 @@ val munitVersion = "0.7.29"
 
 libraryDependencies ++= Seq(
   "org.typelevel" %% "cats-effect" % "3.2.9" withSources() withJavadoc(),
-//  "co.fs2" %% "fs2-core" % fs2Version,
-//  "co.fs2" %% "fs2-io" % fs2Version,
   "com.nrinaudo" %% "kantan.csv" % "0.6.2",
   "org.scalameta" %% "munit" % munitVersion % Test,
   "org.scalameta" %% "munit-scalacheck" % munitVersion % Test,
