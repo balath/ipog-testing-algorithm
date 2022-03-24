@@ -3,6 +3,8 @@ name: Mutation testing
 on:
   push:
     branches: [ mutation ]
+  pull_request:
+    branches: [ mutation ]
 
 jobs:
     runs-on: ubuntu-latest
