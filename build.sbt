@@ -3,7 +3,6 @@ name := "ipog"
 version := "0.1"
 
 scalaVersion := "2.13.6"
-//val fs2Version = "3.2.0"
 val munitVersion = "0.7.29"
 
 libraryDependencies ++= Seq(
